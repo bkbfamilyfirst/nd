@@ -2,9 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { PieChart, Users, Filter } from "lucide-react"
-import { useState } from "react"
+import { PieChart } from "lucide-react"
+
 
 const ssData = [
   { name: "John Smith", region: "North Region", allocated: 1200, used: 876, active: 45 },
@@ -15,19 +14,6 @@ const ssData = [
 ]
 
 export function SSAllocationCard() {
-  const [filter, setFilter] = useState("all")
-
-  const filteredData =
-    filter === "all"
-      ? ssData
-      : ssData.filter((ss) => {
-          const usageRate = (ss.used / ss.allocated) * 100
-          if (filter === "high" && usageRate >= 80) return true
-          if (filter === "medium" && usageRate >= 50 && usageRate < 80) return true
-          if (filter === "low" && usageRate < 50) return true
-          return false
-        })
-
   return (
     <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:shadow-xl transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -39,20 +25,7 @@ export function SSAllocationCard() {
             SS Allocation & Usage
           </span>
         </CardTitle>
-        <div className="flex items-center gap-2">
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[120px] h-8 text-xs">
-              <Filter className="h-3 w-3 mr-1" />
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Usage</SelectItem>
-              <SelectItem value="high">High Usage</SelectItem>
-              <SelectItem value="medium">Medium Usage</SelectItem>
-              <SelectItem value="low">Low Usage</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -78,7 +51,7 @@ export function SSAllocationCard() {
 
           {/* SS List with Usage */}
           <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1">
-            {filteredData.map((ss, index) => {
+            {ssData.map((ss, index) => {
               const usagePercentage = Math.round((ss.used / ss.allocated) * 100)
               let progressColor = "bg-electric-green"
 
@@ -97,13 +70,6 @@ export function SSAllocationCard() {
                     <div>
                       <div className="font-medium text-sm">{ss.name}</div>
                       <div className="text-xs text-muted-foreground">{ss.region}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <Users className="h-3 w-3 text-electric-blue" />
-                        <span className="text-xs font-medium">{ss.active}</span>
-                      </div>
-                      <div className="text-xs font-medium">{usagePercentage}%</div>
                     </div>
                   </div>
                   <div className="space-y-1">

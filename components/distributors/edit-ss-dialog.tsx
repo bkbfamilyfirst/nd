@@ -187,7 +187,7 @@ export function EditSSDialog({ open, onOpenChange, ss, onEdit }: EditSSDialogPro
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="edit-keysAllocated">Keys Allocated</Label>
               <Input
                 id="edit-keysAllocated"
@@ -198,10 +198,10 @@ export function EditSSDialog({ open, onOpenChange, ss, onEdit }: EditSSDialogPro
                 className={errors.keysAllocated ? "border-red-500" : ""}
               />
               {errors.keysAllocated && <p className="text-sm text-red-500">{errors.keysAllocated}</p>}
-            </div>
+            </div> */}
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="edit-keysUsed">Keys Used</Label>
             <Input
               id="edit-keysUsed"
@@ -213,7 +213,7 @@ export function EditSSDialog({ open, onOpenChange, ss, onEdit }: EditSSDialogPro
               className={errors.keysUsed ? "border-red-500" : ""}
             />
             {errors.keysUsed && <p className="text-sm text-red-500">{errors.keysUsed}</p>}
-          </div>
+          </div> */}
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">

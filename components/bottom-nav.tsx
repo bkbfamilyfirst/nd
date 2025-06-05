@@ -20,13 +20,13 @@ const navItems = [
     shortName: "ND",
     color: "from-electric-cyan to-electric-purple",
   },
-  {
-    name: "Reports",
-    icon: BarChart3,
-    href: "/reports",
-    shortName: "Reports",
-    color: "from-electric-orange to-electric-pink",
-  },
+  // {
+  //   name: "Reports",
+  //   icon: BarChart3,
+  //   href: "/reports",
+  //   shortName: "Reports",
+  //   color: "from-electric-orange to-electric-pink",
+  // },
   {
     name: "Profile",
     icon: User,
@@ -61,11 +61,10 @@ export default function BottomNav() {
               key={item.name}
               href={item.href}
               onClick={() => setActiveItem(item.name)}
-              className={`relative flex flex-1 flex-col items-center justify-center rounded-xl p-2 touch-target smooth-transition sm:flex-initial sm:px-3 sm:py-2 ${
-                isActive
+              className={`relative flex flex-1 flex-col items-center justify-center rounded-xl p-2 touch-target smooth-transition sm:flex-initial sm:px-3 sm:py-2 ${isActive
                   ? "text-white scale-105 sm:scale-110"
                   : "text-gray-600 hover:text-electric-purple dark:text-gray-300 hover:scale-105"
-              }`}
+                }`}
             >
               {isActive && (
                 <motion.div
@@ -78,9 +77,8 @@ export default function BottomNav() {
                 <item.icon className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
               </span>
               <span
-                className={`relative z-10 text-[9px] sm:text-[10px] md:text-xs font-medium leading-tight ${
-                  isActive ? "opacity-100" : "opacity-80"
-                }`}
+                className={`relative z-10 text-[9px] sm:text-[10px] md:text-xs font-medium leading-tight ${isActive ? "opacity-100" : "opacity-80"
+                  }`}
               >
                 <span className="block sm:hidden">{item.shortName}</span>
                 <span className="hidden sm:block">{item.name}</span>

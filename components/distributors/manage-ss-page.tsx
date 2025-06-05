@@ -208,7 +208,7 @@ export function ManageSSPage() {
             <div className="flex flex-col items-center p-4 rounded-2xl bg-gradient-to-r from-electric-orange/20 to-electric-pink/20 hover:scale-105 transition-transform duration-300">
               <div className="flex items-center gap-2 mb-1">
                 <UserX className="h-5 w-5 text-electric-orange" />
-                <span className="text-sm font-extrabold text-electric-orange">Blocked</span>
+                <span className="text-sm font-extrabold text-electric-orange">Inactive</span>
               </div>
               <span className="text-2xl font-extrabold text-electric-orange">
                 {blockedCount}
@@ -272,7 +272,7 @@ export function ManageSSPage() {
                   onClick={() => setStatusFilter("blocked")}
                   className={statusFilter === "blocked" ? "bg-gradient-to-r from-electric-orange to-electric-pink" : ""}
                 >
-                  Blocked ({blockedCount})
+                  Inactive ({blockedCount})
                 </Button>
               </div>
             </div>

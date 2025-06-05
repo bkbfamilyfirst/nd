@@ -44,13 +44,13 @@ export function AdminCard() {
                         <span className="text-sm font-bold text-electric-green">2 hours ago</span>
                     </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-electric-orange/10 to-electric-pink/10">
+                    {/* <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-electric-orange/10 to-electric-pink/10">
                         <div className="flex items-center gap-2">
                             <Award className="h-4 w-4 text-electric-orange" />
                             <span className="text-sm font-medium">Experience</span>
                         </div>
                         <span className="text-sm font-bold text-electric-orange">5+ Years</span>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Quick Stats */}
@@ -75,7 +75,7 @@ export function AdminCard() {
                 </div>
 
                 {/* Admin Permissions */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                {/* <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                     <h4 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Permissions</h4>
                     <div className="space-y-2">
                         <Badge className="bg-gradient-to-r from-electric-green to-electric-cyan text-white text-xs">
@@ -88,7 +88,7 @@ export function AdminCard() {
                             Reports & Analytics
                         </Badge>
                     </div>
-                </div>
+                </div> */}
             </CardContent>
         </Card>
     )

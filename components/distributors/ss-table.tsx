@@ -1,11 +1,22 @@
 "use client"
 
+import { useState, useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
-import { Edit, Trash2, Mail, Phone, MapPin, Key, Clock } from "lucide-react"
+import {
+  Edit,
+  Trash2,
+  Mail,
+  Phone,
+  MapPin,
+  Key,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import type { StateSupervisor } from "./manage-ss-page"
 
 interface SSTableProps {
@@ -13,9 +24,22 @@ interface SSTableProps {
   onEdit: (ss: StateSupervisor) => void
   onDelete: (ss: StateSupervisor) => void
   onToggleStatus: (id: string) => void
+  perPage?: number
 }
 
-export function SSTable({ data, onEdit, onDelete, onToggleStatus }: SSTableProps) {
+export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }: SSTableProps) {
+  const [currentPage, setCurrentPage] = useState(1)
+
+  const totalPages = Math.ceil(data.length / perPage)
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * perPage
+    return data.slice(start, start + perPage)
+  }, [data, currentPage, perPage])
+
+  const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1))
+  const handleNext = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+
   if (data.length === 0) {
     return (
       <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
@@ -33,7 +57,7 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus }: SSTableProps
     <div className="space-y-4">
       {/* Mobile Card Layout */}
       <div className="block lg:hidden space-y-4">
-        {data.map((ss) => (
+        {paginatedData.map((ss) => (
           <Card
             key={ss.id}
             className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:shadow-xl transition-all duration-300"
@@ -69,28 +93,28 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus }: SSTableProps
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-electric-blue" />
-                  <span className="text-muted-foreground">{ss.email}</span>
+                  <span>{ss.email}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-electric-green" />
-                  <span className="text-muted-foreground">{ss.phone}</span>
+                  <span>{ss.phone}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-electric-orange" />
-                  <span className="text-muted-foreground">{ss.region}</span>
+                  <span>{ss.region}</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2">
                   <Key className="h-4 w-4 text-electric-purple" />
-                  <span className="text-muted-foreground">
+                  <span>
                     {ss.keysUsed.toLocaleString()} / {ss.keysAllocated.toLocaleString()} keys
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-electric-cyan" />
-                  <span className="text-muted-foreground">Last active: {ss.lastActive}</span>
+                  <span>Last active: {ss.lastActive}</span>
                 </div>
               </div>
 
@@ -131,7 +155,7 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus }: SSTableProps
                 </tr>
               </thead>
               <tbody>
-                {data.map((ss) => (
+                {paginatedData.map((ss) => (
                   <tr key={ss.id} className="border-b hover:bg-muted/30 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -153,12 +177,12 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus }: SSTableProps
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center gap-2">
                           <Mail className="h-3 w-3 text-electric-blue" />
                           <span>{ss.email}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-2">
                           <Phone className="h-3 w-3 text-electric-green" />
                           <span>{ss.phone}</span>
                         </div>
@@ -226,6 +250,21 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus }: SSTableProps
           </div>
         </CardContent>
       </Card>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-center items-center gap-4 pt-4">
+        <Button variant="outline" size="sm" onClick={handlePrev} disabled={currentPage === 1}>
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Prev
+        </Button>
+        <div className="text-sm text-muted-foreground">
+          Page {currentPage} of {totalPages}
+        </div>
+        <Button variant="outline" size="sm" onClick={handleNext} disabled={currentPage === totalPages}>
+          Next
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
+      </div>
     </div>
   )
 }

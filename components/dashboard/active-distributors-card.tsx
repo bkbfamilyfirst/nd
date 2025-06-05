@@ -3,9 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Users, UserCheck, UserX, Filter } from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState } from "react"
+import { Users, UserCheck, UserX } from "lucide-react"
 
 const distributors = [
   {
@@ -43,21 +41,16 @@ const distributors = [
   {
     name: "Robert Wilson",
     region: "Central Zone",
-    status: "pending",
-    lastActive: "Just now",
+    status: "inactive",
+    lastActive: "1 week ago",
     keysAllocated: 200,
     keysUsed: 0,
   },
 ]
 
 export function ActiveDistributorsCard() {
-  const [filter, setFilter] = useState("all")
-
-  const filteredDistributors = filter === "all" ? distributors : distributors.filter((d) => d.status === filter)
-
   const activeCount = distributors.filter((d) => d.status === "active").length
   const inactiveCount = distributors.filter((d) => d.status === "inactive").length
-  const pendingCount = distributors.filter((d) => d.status === "pending").length
 
   return (
     <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:shadow-xl transition-all duration-300">
@@ -70,51 +63,30 @@ export function ActiveDistributorsCard() {
             Active Distributors
           </span>
         </CardTitle>
-        <div className="flex items-center gap-2">
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[120px] h-8 text-xs">
-              <Filter className="h-3 w-3 mr-1" />
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
           {/* Status Summary */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="flex flex-col items-center p-2 rounded-lg bg-gradient-to-r from-electric-green/10 to-electric-cyan/10">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col items-center p-3 rounded-lg bg-gradient-to-r from-electric-green/10 to-electric-cyan/10">
               <div className="flex items-center gap-1">
                 <UserCheck className="h-4 w-4 text-electric-green" />
                 <span className="text-xs font-medium">Active</span>
               </div>
               <span className="text-lg font-bold text-electric-green">{activeCount}</span>
             </div>
-            <div className="flex flex-col items-center p-2 rounded-lg bg-gradient-to-r from-electric-orange/10 to-electric-pink/10">
+            <div className="flex flex-col items-center p-3 rounded-lg bg-gradient-to-r from-electric-orange/10 to-electric-pink/10">
               <div className="flex items-center gap-1">
                 <UserX className="h-4 w-4 text-electric-orange" />
                 <span className="text-xs font-medium">Inactive</span>
               </div>
               <span className="text-lg font-bold text-electric-orange">{inactiveCount}</span>
             </div>
-            <div className="flex flex-col items-center p-2 rounded-lg bg-gradient-to-r from-electric-purple/10 to-electric-blue/10">
-              <div className="flex items-center gap-1">
-                <Users className="h-4 w-4 text-electric-purple" />
-                <span className="text-xs font-medium">Pending</span>
-              </div>
-              <span className="text-lg font-bold text-electric-purple">{pendingCount}</span>
-            </div>
           </div>
 
           {/* Distributor List */}
           <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
-            {filteredDistributors.map((distributor, index) => (
+            {distributors.map((distributor, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow"
@@ -139,19 +111,11 @@ export function ActiveDistributorsCard() {
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <Badge
-                    variant={
-                      distributor.status === "active"
-                        ? "default"
-                        : distributor.status === "inactive"
-                          ? "destructive"
-                          : "outline"
-                    }
+                    variant={distributor.status === "active" ? "default" : "destructive"}
                     className={
                       distributor.status === "active"
                         ? "bg-gradient-to-r from-electric-green to-electric-cyan border-0"
-                        : distributor.status === "inactive"
-                          ? "bg-gradient-to-r from-electric-orange to-electric-pink border-0"
-                          : ""
+                        : "bg-gradient-to-r from-electric-orange to-electric-pink border-0"
                     }
                   >
                     {distributor.status.charAt(0).toUpperCase() + distributor.status.slice(1)}
