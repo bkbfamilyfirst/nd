@@ -16,7 +16,7 @@ const navItems = [
   {
     name: "Manage SS",
     icon: Network,
-    href: "/distributors",
+    href: "/manage-ss",
     shortName: "ND",
     color: "from-electric-cyan to-electric-purple",
   },
