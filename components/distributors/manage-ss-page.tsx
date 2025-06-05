@@ -143,7 +143,7 @@ export function ManageSSPage() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold">Manage State Supervisors</h2>
-                <p className="text-white/90 text-sm">Overview of your SS network</p>
+                <p className="mt-1 text-white/90 text-1xl">Overview of your SS network</p>
               </div>
             </div>
             {/* Add any optional buttons here if needed */}
