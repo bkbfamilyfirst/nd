@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState } from "react"
-import type { StateSupervisor } from "./manage-ss-page"
+import type { StateSupervisor } from "@/lib/api"
 
 interface AddSSDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAdd: (ss: Omit<StateSupervisor, "id">) => void
+  onAdd: (ss: { name: string; email: string; phone: string; location: string; status?: "active" | "inactive" | "blocked"; assignedKeys?: number; }) => void
 }
 
 export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
@@ -21,10 +21,9 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
     name: "",
     email: "",
     phone: "",
-    region: "",
-    status: "active" as "active" | "blocked",
-    keysAllocated: 0,
-    keysUsed: 0,
+    location: "",
+    status: "active" as "active" | "inactive" | "blocked",
+    assignedKeys: 0,
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -43,43 +42,38 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
     }
 
     if (!formData.phone.trim()) {
-      newErrors.phone = "Phone is required"
+      newErrors.phone = "Phone number is required"
     }
 
-    if (!formData.region.trim()) {
-      newErrors.region = "Region is required"
+    if (!formData.location.trim()) {
+      newErrors.location = "Location is required"
     }
 
-    if (formData.keysAllocated < 0) {
-      newErrors.keysAllocated = "Keys allocated must be 0 or greater"
+    if (formData.assignedKeys < 0) {
+      newErrors.assignedKeys = "Keys allocated must be 0 or greater"
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!validateForm()) {
       return
     }
 
-    onAdd({
-      ...formData,
-      lastActive: "Just now",
-      joinedDate: new Date().toISOString().split("T")[0],
-    })
+    await onAdd(formData)
 
-    // Reset form
+    // Reset form only if submission was successful (handled by parent component via onOpenChange)
     setFormData({
       name: "",
       email: "",
       phone: "",
-      region: "",
+      location: "",
       status: "active",
-      keysAllocated: 0,
-      keysUsed: 0,
+      assignedKeys: 0,
     })
     setErrors({})
   }
@@ -142,10 +136,10 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
               {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="region">Region *</Label>
-              <Select value={formData.region} onValueChange={(value) => handleInputChange("region", value)}>
-                <SelectTrigger className={errors.region ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Select region" />
+              <Label htmlFor="location">Location *</Label>
+              <Select value={formData.location} onValueChange={(value) => handleInputChange("location", value)}>
+                <SelectTrigger className={errors.location ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="North Region">North Region</SelectItem>
@@ -155,7 +149,7 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
                   <SelectItem value="Central Region">Central Region</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.region && <p className="text-sm text-red-500">{errors.region}</p>}
+              {errors.location && <p className="text-sm text-red-500">{errors.location}</p>}
             </div>
           </div>
 
@@ -164,13 +158,14 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
               <Label htmlFor="status">Initial Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value: "active" | "blocked") => handleInputChange("status", value)}
+                onValueChange={(value: "active" | "inactive" | "blocked") => handleInputChange("status", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                   <SelectItem value="blocked">Blocked</SelectItem>
                 </SelectContent>
               </Select>
@@ -181,12 +176,12 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
                 id="keysAllocated"
                 type="number"
                 min="0"
-                value={formData.keysAllocated}
-                onChange={(e) => handleInputChange("keysAllocated", Number.parseInt(e.target.value) || 0)}
+                value={formData.assignedKeys}
+                onChange={(e) => handleInputChange("assignedKeys", Number.parseInt(e.target.value) || 0)}
                 placeholder="0"
-                className={errors.keysAllocated ? "border-red-500" : ""}
+                className={errors.assignedKeys ? "border-red-500" : ""}
               />
-              {errors.keysAllocated && <p className="text-sm text-red-500">{errors.keysAllocated}</p>}
+              {errors.assignedKeys && <p className="text-sm text-red-500">{errors.assignedKeys}</p>}
             </div>
           </div>
 

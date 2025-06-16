@@ -17,13 +17,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
-import type { StateSupervisor } from "./manage-ss-page"
+import type { StateSupervisor } from "@/lib/api"
 
 interface SSTableProps {
   data: StateSupervisor[]
   onEdit: (ss: StateSupervisor) => void
   onDelete: (ss: StateSupervisor) => void
-  onToggleStatus: (id: string) => void
+  onToggleStatus: (id: string, status: "active" | "inactive" | "blocked") => void
   perPage?: number
 }
 
@@ -70,7 +70,7 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                     <AvatarFallback>
                       {ss.name
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join("")}
                     </AvatarFallback>
                   </Avatar>
@@ -89,7 +89,7 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Switch checked={ss.status === "active"} onCheckedChange={() => onToggleStatus(ss.id)} />
+                  <Switch checked={ss.status === "active"} onCheckedChange={() => onToggleStatus(ss.id, ss.status)} />
                 </div>
               </div>
 
@@ -104,17 +104,17 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-electric-orange" />
-                  <span>{ss.region}</span>
+                  <span>{ss.location}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Key className="h-4 w-4 text-electric-purple" />
                   <span>
-                    {ss.keysUsed.toLocaleString()} / {ss.keysAllocated.toLocaleString()} keys
+                    {ss.usedKeys?.toLocaleString() || "N/A"} / {ss.assignedKeys?.toLocaleString() || "N/A"} keys
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-electric-cyan" />
-                  <span>Last active: {ss.lastActive}</span>
+                  <span>Last active: {ss.updatedAt ? new Date(ss.updatedAt).toLocaleDateString() : 'N/A'}</span>
                 </div>
               </div>
 
@@ -126,7 +126,10 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onDelete(ss)}
+                  onClick={() => {
+                    console.log("SS object before onDelete:", ss);
+                    onDelete(ss);
+                  }}
                   className="flex-1 text-destructive hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
@@ -164,14 +167,14 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                           <AvatarFallback>
                             {ss.name
                               .split(" ")
-                              .map((n) => n[0])
+                              .map((n: string) => n[0])
                               .join("")}
                           </AvatarFallback>
                         </Avatar>
                         <div>
                           <div className="font-medium">{ss.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            Joined {new Date(ss.joinedDate).toLocaleDateString()}
+                            Joined {ss.createdAt ? new Date(ss.createdAt).toLocaleDateString() : 'N/A'}
                           </div>
                         </div>
                       </div>
@@ -191,25 +194,25 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-electric-orange" />
-                        <span>{ss.region}</span>
+                        <span>{ss.location}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-y-1">
                         <div className="text-sm font-medium">
-                          {ss.keysUsed.toLocaleString()} / {ss.keysAllocated.toLocaleString()}
+                          {ss.usedKeys?.toLocaleString() || "N/A"} / {ss.assignedKeys?.toLocaleString() || "N/A"}
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
                             className="bg-gradient-to-r from-electric-blue to-electric-purple h-2 rounded-full"
-                            style={{ width: `${(ss.keysUsed / ss.keysAllocated) * 100}%` }}
+                            style={{ width: `${((ss.usedKeys || 0) / (ss.assignedKeys || 1)) * 100}%` }}
                           ></div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <Switch checked={ss.status === "active"} onCheckedChange={() => onToggleStatus(ss.id)} />
+                        <Switch checked={ss.status === "active"} onCheckedChange={() => onToggleStatus(ss.id, ss.status)} />
                         <Badge
                           variant={ss.status === "active" ? "default" : "destructive"}
                           className={
@@ -225,7 +228,7 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm">
                         <Clock className="h-4 w-4 text-electric-cyan" />
-                        <span>{ss.lastActive}</span>
+                        <span>{ss.updatedAt ? new Date(ss.updatedAt).toLocaleDateString() : 'N/A'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -236,7 +239,10 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => onDelete(ss)}
+                          onClick={() => {
+                            console.log("SS object before onDelete (Desktop):", ss);
+                            onDelete(ss);
+                          }}
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -248,23 +254,32 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-end space-x-2 py-4 pr-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrev}
+              disabled={currentPage === 1}
+              className="border-electric-purple/30 text-electric-purple hover:bg-electric-purple/10"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNext}
+              disabled={currentPage === totalPages}
+              className="border-electric-blue/30 text-electric-blue hover:bg-electric-blue/10"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Pagination Controls */}
-      <div className="flex justify-center items-center gap-4 pt-4">
-        <Button variant="outline" size="sm" onClick={handlePrev} disabled={currentPage === 1}>
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Prev
-        </Button>
-        <div className="text-sm text-muted-foreground">
-          Page {currentPage} of {totalPages}
-        </div>
-        <Button variant="outline" size="sm" onClick={handleNext} disabled={currentPage === totalPages}>
-          Next
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
-      </div>
     </div>
   )
 }

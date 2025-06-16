@@ -1,148 +1,120 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { CalendarIcon, Download, Filter, Search, ArrowUp, ArrowDown, Wallet } from "lucide-react"
+import { CalendarIcon, Download, Filter, Search, ArrowUp, ArrowDown, Wallet, ChevronLeft, ChevronRight } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
-
-interface TransferLog {
-  id: string
-  date: string
-  type: "sent" | "received"
-  quantity: number
-  from: string
-  to: string
-  balance: number
-  status: "completed" | "pending" | "failed"
-}
-
-const transferLogs: TransferLog[] = [
-  {
-    id: "TL001",
-    date: "2023-06-01",
-    type: "received",
-    quantity: 1500,
-    from: "Admin",
-    to: "National Distributor",
-    balance: 1500,
-    status: "completed",
-  },
-  {
-    id: "TL002",
-    date: "2023-06-03",
-    type: "sent",
-    quantity: 250,
-    from: "National Distributor",
-    to: "John Smith (SS)",
-    balance: 1250,
-    status: "completed",
-  },
-  {
-    id: "TL003",
-    date: "2023-06-05",
-    type: "sent",
-    quantity: 300,
-    from: "National Distributor",
-    to: "Lisa Johnson (SS)",
-    balance: 950,
-    status: "completed",
-  },
-  {
-    id: "TL004",
-    date: "2023-06-10",
-    type: "received",
-    quantity: 800,
-    from: "Admin",
-    to: "National Distributor",
-    balance: 1750,
-    status: "completed",
-  },
-  {
-    id: "TL005",
-    date: "2023-06-12",
-    type: "sent",
-    quantity: 400,
-    from: "National Distributor",
-    to: "Mark Williams (SS)",
-    balance: 1350,
-    status: "completed",
-  },
-  {
-    id: "TL006",
-    date: "2023-06-15",
-    type: "sent",
-    quantity: 350,
-    from: "National Distributor",
-    to: "Anna Davis (SS)",
-    balance: 1000,
-    status: "pending",
-  },
-  {
-    id: "TL007",
-    date: "2023-06-20",
-    type: "received",
-    quantity: 1200,
-    from: "Admin",
-    to: "National Distributor",
-    balance: 2200,
-    status: "completed",
-  },
-  {
-    id: "TL008",
-    date: "2023-06-22",
-    type: "sent",
-    quantity: 500,
-    from: "National Distributor",
-    to: "Robert Brown (SS)",
-    balance: 1700,
-    status: "failed",
-  },
-  {
-    id: "TL009",
-    date: "2023-06-25",
-    type: "sent",
-    quantity: 300,
-    from: "National Distributor",
-    to: "Emily White (SS)",
-    balance: 1400,
-    status: "completed",
-  },
-  {
-    id: "TL010",
-    date: "2023-06-28",
-    type: "received",
-    quantity: 500,
-    from: "Admin",
-    to: "National Distributor",
-    balance: 1900,
-    status: "completed",
-  },
-]
+import { getNdKeyTransferLogs, exportNdKeyTransferLogs, KeyTransferLog, KeyTransferLogsResponse } from "@/lib/api"
+import { useToast } from "@/components/ui/use-toast"
 
 export function KeyTransferLogs() {
   const [searchTerm, setSearchTerm] = useState("")
   const [typeFilter, setTypeFilter] = useState<"all" | "sent" | "received">("all")
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "pending" | "failed">("all")
   const [date, setDate] = useState<Date | undefined>(undefined)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [logsResponse, setLogsResponse] = useState<KeyTransferLogsResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const { toast } = useToast()
 
-  const filteredLogs = transferLogs.filter((log) => {
-    const matchesSearch =
-      log.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.to.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.id.toLowerCase().includes(searchTerm.toLowerCase())
+  const fetchLogs = async (currentPage: number, currentType: "all" | "sent" | "received", currentStatus: "all" | "completed" | "pending" | "failed", currentDate: Date | undefined, currentSearchTerm: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      let startDate: string | undefined = undefined;
+      let endDate: string | undefined = undefined;
 
-    const matchesType = typeFilter === "all" || log.type === typeFilter
-    const matchesStatus = statusFilter === "all" || log.status === statusFilter
-    const matchesDate = !date || log.date === format(date, "yyyy-MM-dd")
+      if (currentDate) {
+        startDate = format(currentDate, 'yyyy-MM-dd');
+        endDate = format(currentDate, 'yyyy-MM-dd');
+      }
 
-    return matchesSearch && matchesType && matchesStatus && matchesDate
-  })
+      const type = currentType === 'all' ? undefined : currentType;
+      const status = currentStatus === 'all' ? undefined : currentStatus;
+
+      const data = await getNdKeyTransferLogs(
+        currentPage,
+        pageSize,
+        startDate,
+        endDate,
+        status,
+        type,
+        currentSearchTerm
+      )
+      setLogsResponse(data)
+    } catch (err) {
+      console.error("Error fetching key transfer logs:", err)
+      setError("Failed to load key transfer logs. Please try again.")
+      toast({
+        title: "Error",
+        description: "Failed to load key transfer logs. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    debounceTimeoutRef.current = setTimeout(() => {
+      fetchLogs(page, typeFilter, statusFilter, date, searchTerm);
+    }, 500); // Debounce search for 500ms
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [page, typeFilter, statusFilter, date, searchTerm, pageSize]);
+
+  const handleExport = async () => {
+    try {
+      let startDate: string | undefined = undefined;
+      let endDate: string | undefined = undefined;
+
+      if (date) {
+        startDate = format(date, 'yyyy-MM-dd');
+        endDate = format(date, 'yyyy-MM-dd');
+      }
+
+      const type = typeFilter === 'all' ? undefined : typeFilter;
+      const status = statusFilter === 'all' ? undefined : statusFilter;
+
+      await exportNdKeyTransferLogs({
+        startDate,
+        endDate,
+        status,
+        type,
+        search: searchTerm,
+      })
+      toast({
+        title: "Export Initiated",
+        description: "Your key transfer logs export has started. It will download automatically.",
+      })
+    } catch (err: any) {
+      console.error("Failed to export key transfer logs:", err)
+      toast({
+        title: "Export Failed",
+        description: err.response?.data?.message || "Failed to export logs. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const totalPages = logsResponse ? Math.ceil(logsResponse.total / pageSize) : 1;
+  const paginatedData = logsResponse ? logsResponse.logs : [];
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -174,7 +146,7 @@ export function KeyTransferLogs() {
                 />
               </div>
               <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                <Select value={typeFilter} onValueChange={(value: "all" | "sent" | "received") => setTypeFilter(value)}>
+                <Select value={typeFilter} onValueChange={(value: "all" | "sent" | "received") => { setTypeFilter(value); setPage(1); }}>
                   <SelectTrigger className="w-[110px]">
                     <Filter className="h-3.5 w-3.5 mr-2" />
                     <SelectValue placeholder="Type" />
@@ -187,7 +159,7 @@ export function KeyTransferLogs() {
                 </Select>
                 <Select
                   value={statusFilter}
-                  onValueChange={(value: "all" | "completed" | "pending" | "failed") => setStatusFilter(value)}
+                  onValueChange={(value: "all" | "completed" | "pending" | "failed") => { setStatusFilter(value); setPage(1); }}
                 >
                   <SelectTrigger className="w-[130px]">
                     <Filter className="h-3.5 w-3.5 mr-2" />
@@ -208,12 +180,12 @@ export function KeyTransferLogs() {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
-                    <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                    <Calendar mode="single" selected={date} onSelect={(selectedDate) => { setDate(selectedDate); setPage(1); }} initialFocus />
                   </PopoverContent>
                 </Popover>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="ml-auto">
+            <Button variant="outline" size="sm" className="ml-auto" onClick={handleExport}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -221,9 +193,15 @@ export function KeyTransferLogs() {
         </CardContent>
       </Card>
 
-      {/* Mobile Card Layout */}
-      <div className="block lg:hidden space-y-4">
-        {filteredLogs.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Loading key transfer logs...</p>
+        </div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-500">
+          <p>{error}</p>
+        </div>
+      ) : paginatedData.length === 0 ? (
           <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <div className="text-muted-foreground text-center">
@@ -233,9 +211,12 @@ export function KeyTransferLogs() {
             </CardContent>
           </Card>
         ) : (
-          filteredLogs.map((log) => (
+        <>
+          {/* Mobile Card Layout */}
+          <div className="block lg:hidden space-y-4">
+            {paginatedData.map((log) => (
             <Card
-              key={log.id}
+                key={log.transferId}
               className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:shadow-xl transition-all duration-300"
             >
               <CardContent className="p-4">
@@ -256,7 +237,7 @@ export function KeyTransferLogs() {
                       )}
                       {log.type.charAt(0).toUpperCase() + log.type.slice(1)}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">{new Date(log.date).toLocaleDateString()}</span>
+                      <span className="text-xs text-muted-foreground">{new Date(log.timestamp).toLocaleDateString()}</span>
                   </div>
                   <Badge variant="outline" className={getStatusBadgeClass(log.status)}>
                     {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
@@ -266,45 +247,35 @@ export function KeyTransferLogs() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">ID:</span>
-                    <span className="font-medium">{log.id}</span>
+                      <span className="font-medium">{log.transferId}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Quantity:</span>
-                    <span className="font-medium">{log.quantity.toLocaleString()}</span>
+                      <span className="font-medium">{log.count.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">From:</span>
-                    <span className="text-sm truncate max-w-[150px]">{log.from}</span>
+                      <span className="text-sm truncate max-w-[150px]">{log.from?.name || "N/A"}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">To:</span>
-                    <span className="text-sm truncate max-w-[150px]">{log.to}</span>
+                      <span className="text-sm truncate max-w-[150px]">{log.to?.name || "N/A"}</span>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="text-sm text-muted-foreground">Balance:</span>
+                      <span className="text-sm text-muted-foreground">Notes:</span>
                     <div className="flex items-center gap-1">
-                      <Wallet className="h-4 w-4 text-electric-blue" />
-                      <span className="font-medium">{log.balance.toLocaleString()}</span>
+                        <span className="font-medium text-electric-blue">{log.notes || "N/A"}</span>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
+            ))}
       </div>
 
       {/* Desktop Table Layout */}
       <Card className="hidden lg:block border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:shadow-xl transition-all duration-300">
         <CardContent className="p-0">
-          {filteredLogs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="text-muted-foreground text-center">
-                <div className="text-lg font-medium mb-2">No Transfer Logs Found</div>
-                <div className="text-sm">Try adjusting your search or filter criteria</div>
-              </div>
-            </div>
-          ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -315,15 +286,15 @@ export function KeyTransferLogs() {
                     <th className="px-4 py-3 text-left font-medium">Quantity</th>
                     <th className="px-4 py-3 text-left font-medium">From</th>
                     <th className="px-4 py-3 text-left font-medium">To</th>
-                    <th className="px-4 py-3 text-left font-medium">Balance</th>
+                      <th className="px-4 py-3 text-left font-medium">Notes</th>
                     <th className="px-4 py-3 text-left font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredLogs.map((log) => (
-                    <tr key={log.id} className="border-b hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3 font-medium">{log.id}</td>
-                      <td className="px-4 py-3">{new Date(log.date).toLocaleDateString()}</td>
+                    {paginatedData.map((log) => (
+                      <tr key={log.transferId} className="border-b hover:bg-muted/30 transition-colors">
+                        <td className="px-4 py-3 font-medium">{log.transferId}</td>
+                        <td className="px-4 py-3">{new Date(log.timestamp).toLocaleDateString()}</td>
                       <td className="px-4 py-3">
                         <Badge
                           variant={log.type === "received" ? "default" : "outline"}
@@ -341,15 +312,10 @@ export function KeyTransferLogs() {
                           {log.type.charAt(0).toUpperCase() + log.type.slice(1)}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 font-medium">{log.quantity.toLocaleString()}</td>
-                      <td className="px-4 py-3">{log.from}</td>
-                      <td className="px-4 py-3">{log.to}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          <Wallet className="h-4 w-4 text-electric-blue" />
-                          <span className="font-medium">{log.balance.toLocaleString()}</span>
-                        </div>
-                      </td>
+                        <td className="px-4 py-3 font-medium">{log.count.toLocaleString()}</td>
+                        <td className="px-4 py-3">{log.from?.name || "N/A"}</td>
+                        <td className="px-4 py-3">{log.to?.name || "N/A"}</td>
+                        <td className="px-4 py-3">{log.notes || "N/A"}</td>
                       <td className="px-4 py-3">
                         <Badge variant="outline" className={getStatusBadgeClass(log.status)}>
                           {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
@@ -360,9 +326,25 @@ export function KeyTransferLogs() {
                 </tbody>
               </table>
             </div>
-          )}
         </CardContent>
       </Card>
+
+          {/* Pagination Controls */}
+          <div className="flex justify-center items-center gap-4 pt-4">
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => p - 1)} disabled={page === 1}>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Prev
+            </Button>
+            <div className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}>
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

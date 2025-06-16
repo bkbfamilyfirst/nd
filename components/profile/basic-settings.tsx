@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Settings, Lock, Eye, EyeOff, Save } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 export function BasicSettings() {
     const [showCurrentPassword, setShowCurrentPassword] = useState(false)
@@ -16,17 +17,29 @@ export function BasicSettings() {
         newPassword: "",
         confirmPassword: "",
     })
+    const { toast } = useToast()
 
     const handlePasswordChange = (field: string, value: string) => {
         setPasswordData((prev) => ({ ...prev, [field]: value }))
     }
 
     const handlePasswordSave = () => {
-        // Here you would typically validate and save the password
+        // TODO: Integrate with backend API for changing ND password (currently no dedicated endpoint exists)
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            alert("New passwords don't match!")
+            toast({
+                title: "Validation Error",
+                description: "New passwords don't match!",
+                variant: "destructive",
+            })
             return
         }
+
+        // Simulate API call
+        console.log("Attempting to change password:", passwordData)
+        toast({
+            title: "Success",
+            description: "Password change initiated. (Backend integration pending)",
+        })
 
         // Reset form
         setPasswordData({
@@ -34,8 +47,6 @@ export function BasicSettings() {
             newPassword: "",
             confirmPassword: "",
         })
-
-        alert("Password updated successfully!")
     }
 
     return (

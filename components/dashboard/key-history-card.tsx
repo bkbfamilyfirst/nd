@@ -5,61 +5,82 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { History, ArrowDownUp, ArrowUp, ArrowDown, Calendar, ChevronLeft, ChevronRight } from "lucide-react"
-import { useState } from "react"
-
-const keyHistory = [
-  { date: "2023-06-01", type: "received", quantity: 1500, from: "Admin", to: "National Distributor", balance: 1500 },
-  { date: "2023-06-03", type: "sent", quantity: 250, from: "National Distributor", to: "John Smith (SS)", balance: 1250 },
-  { date: "2023-06-05", type: "sent", quantity: 300, from: "National Distributor", to: "Lisa Johnson (SS)", balance: 950 },
-  { date: "2023-06-10", type: "received", quantity: 800, from: "Admin", to: "National Distributor", balance: 1750 },
-  { date: "2023-06-12", type: "sent", quantity: 400, from: "National Distributor", to: "Mark Williams (SS)", balance: 1350 },
-  { date: "2023-06-15", type: "sent", quantity: 350, from: "National Distributor", to: "Anna Davis (SS)", balance: 1000 },
-  { date: "2023-06-20", type: "received", quantity: 1200, from: "Admin", to: "National Distributor", balance: 2200 },
-  { date: "2023-06-22", type: "sent", quantity: 500, from: "National Distributor", to: "Robert Brown (SS)", balance: 1700 },
-  // Add more for pagination testing
-]
+import { useEffect, useState, useRef } from "react"
+import { getNdKeyTransferLogs, KeyTransferLog, KeyTransferLogsResponse } from "@/lib/api"
+import { format } from 'date-fns';
+import { Input } from "@/components/ui/input"
 
 export function KeyHistoryCard() {
-  const [period, setPeriod] = useState("all")
-  const [tab, setTab] = useState("all")
+  const [period, setPeriod] = useState<string>("all")
+  const [tab, setTab] = useState<"all" | "received" | "sent">("all")
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(5)
+  const [logsResponse, setLogsResponse] = useState<KeyTransferLogsResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState("");
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const filteredHistory = keyHistory
-    .filter((item) => {
-      if (tab === "all") return true
-      return item.type === tab
-    })
-    .filter((item) => {
-      if (period === "all") return true
-      const itemDate = new Date(item.date)
-      const now = new Date()
+  const fetchLogs = async (currentPage: number, currentTab: "all" | "received" | "sent", currentPeriod: string, currentSearchTerm: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      let startDate: string | undefined = undefined;
+      let endDate: string | undefined = undefined;
 
-      if (period === "week") {
-        const weekAgo = new Date()
-        weekAgo.setDate(now.getDate() - 7)
-        return itemDate >= weekAgo
+      const now = new Date();
+
+      if (currentPeriod === "week") {
+        const weekAgo = new Date();
+        weekAgo.setDate(now.getDate() - 7);
+        startDate = format(weekAgo, 'yyyy-MM-dd');
+      } else if (currentPeriod === "month") {
+        const monthAgo = new Date();
+        monthAgo.setMonth(now.getMonth() - 1);
+        startDate = format(monthAgo, 'yyyy-MM-dd');
+      } else if (currentPeriod === "quarter") {
+        const quarterAgo = new Date();
+        quarterAgo.setMonth(now.getMonth() - 3);
+        startDate = format(quarterAgo, 'yyyy-MM-dd');
       }
+      endDate = format(now, 'yyyy-MM-dd');
 
-      if (period === "month") {
-        const monthAgo = new Date()
-        monthAgo.setMonth(now.getMonth() - 1)
-        return itemDate >= monthAgo
+      const type = currentTab === 'all' ? undefined : currentTab;
+
+      const data = await getNdKeyTransferLogs(
+        currentPage,
+        pageSize,
+        startDate,
+        endDate,
+        undefined, // status filter not directly in this card, can be added if needed
+        type,
+        currentSearchTerm
+      )
+      setLogsResponse(data)
+    } catch (err) {
+      console.error("Error fetching key transfer logs:", err)
+      setError("Failed to load key history. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    debounceTimeoutRef.current = setTimeout(() => {
+      fetchLogs(page, tab, period, searchTerm);
+    }, 500); // Debounce search for 500ms
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
       }
+    };
+  }, [page, tab, period, searchTerm, pageSize]);
 
-      if (period === "quarter") {
-        const quarterAgo = new Date()
-        quarterAgo.setMonth(now.getMonth() - 3)
-        return itemDate >= quarterAgo
-      }
-
-      return true
-    })
-
-  const totalPages = Math.ceil(filteredHistory.length / pageSize)
-  const paginatedData = filteredHistory.slice((page - 1) * pageSize, page * pageSize)
-
-  const handleTabChange = (val: string) => {
+  const handleTabChange = (val: "all" | "received" | "sent") => {
     setTab(val)
     setPage(1)
   }
@@ -68,6 +89,14 @@ export function KeyHistoryCard() {
     setPeriod(val)
     setPage(1)
   }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setPage(1);
+  };
+
+  const totalPages = logsResponse ? Math.ceil(logsResponse.total / pageSize) : 1
+  const paginatedData = logsResponse ? logsResponse.logs : []
 
   return (
     <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:shadow-xl transition-all duration-300">
@@ -81,6 +110,13 @@ export function KeyHistoryCard() {
           </span>
         </CardTitle>
         <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Input
+            type="text"
+            placeholder="Search logs..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="w-[180px] h-8 text-xs"
+          />
           <Select value={period} onValueChange={handlePeriodChange}>
             <SelectTrigger className="w-[120px] h-8 text-xs">
               <Calendar className="h-3 w-3 mr-1" />
@@ -112,12 +148,24 @@ export function KeyHistoryCard() {
             </TabsTrigger>
           </TabsList>
 
-          {["all", "received", "sent"].map((tabKey) => (
-            <TabsContent key={tabKey} value={tabKey} className="mt-0">
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Loading key history...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-500">
+              <p>{error}</p>
+            </div>
+          ) : paginatedData.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No key history found for the selected filters.</p>
+            </div>
+          ) : (
+            <>
               {/* Mobile Card Layout */}
               <div className="block md:hidden space-y-3">
-                {paginatedData.map((item, index) => (
-                  <div key={index} className="p-4 rounded-lg border bg-white dark:bg-gray-800 shadow-sm">
+                {paginatedData.map((item) => (
+                  <div key={item.transferId} className="p-4 rounded-lg border bg-white dark:bg-gray-800 shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         {item.type === "received" ? (
@@ -132,17 +180,23 @@ export function KeyHistoryCard() {
                           </>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground">{new Date(item.date).toLocaleDateString()}</span>
+                      <span className="text-xs text-muted-foreground">{new Date(item.timestamp).toLocaleDateString()}</span>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Quantity:</span>
-                        <span className="font-medium">{item.quantity.toLocaleString()}</span>
+                        <span className="font-medium">{item.count.toLocaleString()}</span>
                       </div>
                       {item.type === "sent" && (
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-muted-foreground">To:</span>
-                          <span className="text-sm truncate max-w-[150px]">{item.to}</span>
+                          <span className="text-sm truncate max-w-[150px]">{item.to?.name || "N/A"}</span>
+                        </div>
+                      )}
+                      {item.type === "received" && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">From:</span>
+                          <span className="text-sm truncate max-w-[150px]">{item.from?.name || "N/A"}</span>
                         </div>
                       )}
                     </div>
@@ -159,13 +213,15 @@ export function KeyHistoryCard() {
                         <th className="px-4 py-3 text-left font-medium">Date</th>
                         <th className="px-4 py-3 text-left font-medium">Type</th>
                         <th className="px-4 py-3 text-left font-medium">Quantity</th>
-                        {tabKey !== "received" && <th className="px-4 py-3 text-left font-medium">To</th>}
+                        <th className="px-4 py-3 text-left font-medium">From</th>
+                        <th className="px-4 py-3 text-left font-medium">To</th>
+                        <th className="px-4 py-3 text-left font-medium">Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedData.map((item, index) => (
-                        <tr key={index} className="border-t hover:bg-muted/30">
-                          <td className="px-4 py-3">{new Date(item.date).toLocaleDateString()}</td>
+                      {paginatedData.map((item) => (
+                        <tr key={item.transferId} className="border-t hover:bg-muted/30">
+                          <td className="px-4 py-3">{new Date(item.timestamp).toLocaleDateString()}</td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1">
                               {item.type === "received" ? (
@@ -181,8 +237,10 @@ export function KeyHistoryCard() {
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-3 font-medium">{item.quantity.toLocaleString()}</td>
-                          {tabKey !== "received" && <td className="px-4 py-3">{item.to}</td>}
+                          <td className="px-4 py-3 font-medium">{item.count.toLocaleString()}</td>
+                          <td className="px-4 py-3">{item.from?.name || "N/A"}</td>
+                          <td className="px-4 py-3">{item.to?.name || "N/A"}</td>
+                          <td className="px-4 py-3">{item.status}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -230,8 +288,8 @@ export function KeyHistoryCard() {
                   </Select>
                 </div>
               </div>
-            </TabsContent>
-          ))}
+            </>
+          )}
         </Tabs>
       </CardContent>
     </Card>

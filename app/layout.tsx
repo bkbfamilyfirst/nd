@@ -1,17 +1,20 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter as FontSans } from "next/font/google"
 import "./globals.css"
+import { cn } from "@/lib/utils"
 import { ThemeProvider } from "@/components/theme-provider"
-import Header from "@/components/header"
-import BottomNav from "@/components/bottom-nav"
+import { Toaster } from "@/components/ui/toaster"
+import AuthLayout from "./auth-layout"
 
-const inter = Inter({ subsets: ["latin"] })
+const fontSans = FontSans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+})
 
 export const metadata: Metadata = {
-  title: "Family First ND Panel",
-  description: "Admin control center for parental control ecosystem management",
-  generator: 'v0.dev'
+  title: "Family First National Distributor Panel",
+  description: "Manage your State Supervisors and key distributions.",
 }
 
 export default function RootLayout({
@@ -21,13 +24,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1 pb-20 sm:pb-24 md:pb-28">{children}</main>
-            <BottomNav />
-          </div>
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable
+        )}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthLayout>{children}</AuthLayout>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

@@ -4,132 +4,154 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Users, Plus, Search, UserCheck, UserX, KeyRound } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { SSTable } from "./ss-table"
 import { AddSSDialog } from "./add-ss-dialog"
 import { EditSSDialog } from "./edit-ss-dialog"
 import { DeleteSSDialog } from "./delete-ss-dialog"
-
-
-export interface StateSupervisor {
-  id: string
-  name: string
-  email: string
-  phone: string
-  region: string
-  status: "active" | "blocked"
-  keysAllocated: number
-  keysUsed: number
-  lastActive: string
-  joinedDate: string
-}
-
-const initialSSData: StateSupervisor[] = [
-  {
-    id: "ss1",
-    name: "John Smith",
-    email: "john.smith@example.com",
-    phone: "+1 (555) 123-4567",
-    region: "North Region",
-    status: "active",
-    keysAllocated: 1200,
-    keysUsed: 876,
-    lastActive: "2 hours ago",
-    joinedDate: "2023-01-15",
-  },
-  {
-    id: "ss2",
-    name: "Lisa Johnson",
-    email: "lisa.johnson@example.com",
-    phone: "+1 (555) 234-5678",
-    region: "South Region",
-    status: "active",
-    keysAllocated: 950,
-    keysUsed: 782,
-    lastActive: "5 mins ago",
-    joinedDate: "2023-02-20",
-  },
-  {
-    id: "ss3",
-    name: "Mark Williams",
-    email: "mark.williams@example.com",
-    phone: "+1 (555) 345-6789",
-    region: "East Region",
-    status: "blocked",
-    keysAllocated: 800,
-    keysUsed: 523,
-    lastActive: "3 days ago",
-    joinedDate: "2023-03-10",
-  },
-  {
-    id: "ss4",
-    name: "Anna Davis",
-    email: "anna.davis@example.com",
-    phone: "+1 (555) 456-7890",
-    region: "West Region",
-    status: "active",
-    keysAllocated: 1050,
-    keysUsed: 912,
-    lastActive: "1 hour ago",
-    joinedDate: "2023-01-25",
-  },
-  {
-    id: "ss5",
-    name: "Robert Brown",
-    email: "robert.brown@example.com",
-    phone: "+1 (555) 567-8901",
-    region: "Central Region",
-    status: "active",
-    keysAllocated: 750,
-    keysUsed: 487,
-    lastActive: "Just now",
-    joinedDate: "2023-04-05",
-  },
-]
+import { getNdSsList, getNdSsStats, addNdSs, updateNdSs, deleteNdSs, StateSupervisor as ApiStateSupervisor, SsStats } from "@/lib/api"
+import { useToast } from "@/components/ui/use-toast"
+import { AddSSSuccessDialog } from "./add-ss-success-dialog"
 
 export function ManageSSPage() {
-  const [ssData, setSSData] = useState<StateSupervisor[]>(initialSSData)
+  const [ssData, setSsData] = useState<ApiStateSupervisor[]>([])
+  const [ssStats, setSsStats] = useState<SsStats | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "blocked">("all")
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "blocked">("all")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingSS, setEditingSS] = useState<StateSupervisor | null>(null)
-  const [deletingSS, setDeletingSS] = useState<StateSupervisor | null>(null)
+  const [editingSS, setEditingSS] = useState<ApiStateSupervisor | null>(null)
+  const [deletingSS, setDeletingSS] = useState<ApiStateSupervisor | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [newlyAddedSS, setNewlyAddedSS] = useState<{ ss: ApiStateSupervisor; defaultPassword: string } | null>(null)
+  const { toast } = useToast()
+
+  const fetchSsData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [list, stats] = await Promise.all([
+        getNdSsList(),
+        getNdSsStats(),
+      ])
+      setSsData(Array.isArray(list) ? list : [])
+      setSsStats(stats)
+    } catch (err: any) {
+      console.error("Failed to fetch SS data:", err)
+      setError(err.response?.data?.message || "Failed to load State Supervisors.")
+      toast({
+        title: "Error",
+        description: err.response?.data?.message || "Failed to load State Supervisors.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [toast])
+
+  useEffect(() => {
+    fetchSsData()
+  }, [fetchSsData])
 
   const filteredSSData = ssData.filter((ss) => {
     const matchesSearch =
       ss.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ss.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ss.region.toLowerCase().includes(searchTerm.toLowerCase())
+      ss.location.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesStatus = statusFilter === "all" || ss.status === statusFilter
+    const matchesStatus = statusFilter === "all" || (ss.status ?? '').toLowerCase().trim() === statusFilter || (statusFilter === "inactive" && (ss.status ?? '').toLowerCase().trim() === "inactive")
+
+    console.log(`SS: ${ss.name}, Status: ${ss.status}, Filter: ${statusFilter}, Matches: ${matchesStatus}`)
 
     return matchesSearch && matchesStatus
   })
 
-  const handleAddSS = (newSS: Omit<StateSupervisor, "id">) => {
-    const id = `ss${Date.now()}`
-    setSSData([...ssData, { ...newSS, id }])
+  console.log("SS Data:", ssData)
+  console.log("Status Filter:", statusFilter)
+  console.log("Filtered SS Data:", filteredSSData)
+
+  const handleAddSS = async (newSS: { name: string; email: string; phone: string; location: string; status?: string; assignedKeys?: number; }) => {
+    try {
+      const response = await addNdSs({ ...newSS })
+      toast({
+        title: "Success",
+        description: `State Supervisor ${response.ss.name} added successfully. Default password: ${response.defaultPassword}`,
+      })
+      setNewlyAddedSS({ ss: response.ss, defaultPassword: response.defaultPassword })
+      fetchSsData()
     setIsAddDialogOpen(false)
+    } catch (err: any) {
+      console.error("Error adding SS:", err)
+      toast({
+        title: "Error",
+        description: err.response?.data?.message || "Failed to add State Supervisor.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleEditSS = (updatedSS: StateSupervisor) => {
-    setSSData(ssData.map((ss) => (ss.id === updatedSS.id ? updatedSS : ss)))
+  const handleEditSS = async (updatedSS: ApiStateSupervisor) => {
+    try {
+      await updateNdSs(updatedSS.id, {
+        name: updatedSS.name,
+        email: updatedSS.email,
+        phone: updatedSS.phone,
+        location: updatedSS.location,
+        status: updatedSS.status,
+      })
+      toast({
+        title: "Success",
+        description: `State Supervisor ${updatedSS.name} updated successfully.`,
+      })
+      fetchSsData()
     setEditingSS(null)
+    } catch (err: any) {
+      console.error("Error updating SS:", err)
+      toast({
+        title: "Error",
+        description: err.response?.data?.message || "Failed to update State Supervisor.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleDeleteSS = (id: string) => {
-    setSSData(ssData.filter((ss) => ss.id !== id))
+  const handleDeleteSS = async (id: string) => {
+    try {
+      await deleteNdSs(id)
+      toast({
+        title: "Success",
+        description: "State Supervisor deleted successfully.",
+      })
+      fetchSsData()
     setDeletingSS(null)
+    } catch (err: any) {
+      console.error("Error deleting SS:", err)
+      toast({
+        title: "Error",
+        description: err.response?.data?.message || "Failed to delete State Supervisor.",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleToggleStatus = (id: string) => {
-    setSSData(
-      ssData.map((ss) => (ss.id === id ? { ...ss, status: ss.status === "active" ? "blocked" : "active" } : ss)),
-    )
+  const handleToggleStatus = async (id: string, currentStatus: "active" | "inactive" | "blocked") => {
+    const newStatus = currentStatus === "active" ? "blocked" : "active"
+    try {
+      await updateNdSs(id, { status: newStatus })
+      toast({
+        title: "Success",
+        description: `State Supervisor status updated to ${newStatus}.`,
+      })
+      fetchSsData()
+    } catch (err: any) {
+      console.error("Error toggling SS status:", err)
+      toast({
+        title: "Error",
+        description: err.response?.data?.message || "Failed to update status.",
+        variant: "destructive",
+      })
+    }
   }
-
-  const activeCount = ssData.filter((ss) => ss.status === "active").length
-  const blockedCount = ssData.filter((ss) => ss.status === "blocked").length
 
   return (
     <div className="responsive-container py-4 sm:py-8">
@@ -146,35 +168,7 @@ export function ManageSSPage() {
                 <p className="mt-1 text-white/90 text-1xl">Overview of your SS network</p>
               </div>
             </div>
-            {/* Add any optional buttons here if needed */}
           </div>
-
-          {/* <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="text-center p-4 rounded-lg bg-white/10 backdrop-blur-sm">
-              <div className="text-2xl font-bold text-white">
-                {ssData.length}
-              </div>
-              <div className="text-sm text-white/80">Total SS</div>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/10 backdrop-blur-sm">
-              <div className="text-2xl font-bold text-white">
-                {activeCount}
-              </div>
-              <div className="text-sm text-white/80">Active</div>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/10 backdrop-blur-sm">
-              <div className="text-2xl font-bold text-white">
-                {blockedCount}
-              </div>
-              <div className="text-sm text-white/80">Blocked</div>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-white/10 backdrop-blur-sm">
-              <div className="text-2xl font-bold text-white">
-                {ssData.reduce((sum, ss) => sum + ss.keysAllocated, 0).toLocaleString()}
-              </div>
-              <div className="text-sm text-white/80">Total Keys</div>
-            </div>
-          </div> */}
         </CardContent>
       </Card>
 
@@ -189,7 +183,7 @@ export function ManageSSPage() {
                 <span className="text-sm font-extrabold text-electric-purple">Total SS</span>
               </div>
               <span className="text-2xl font-extrabold text-electric-purple">
-                {ssData.length}
+                {loading ? "..." : ssStats?.total || 0}
               </span>
             </div>
 
@@ -200,7 +194,7 @@ export function ManageSSPage() {
                 <span className="text-sm font-extrabold text-electric-green">Active</span>
               </div>
               <span className="text-2xl font-extrabold text-electric-green">
-                {activeCount}
+                {loading ? "..." : ssStats?.active || 0}
               </span>
             </div>
 
@@ -211,7 +205,7 @@ export function ManageSSPage() {
                 <span className="text-sm font-extrabold text-electric-orange">Inactive</span>
               </div>
               <span className="text-2xl font-extrabold text-electric-orange">
-                {blockedCount}
+                {loading ? "..." : ssStats?.blocked || 0}
               </span>
             </div>
 
@@ -222,14 +216,13 @@ export function ManageSSPage() {
                 <span className="text-sm font-extrabold text-electric-yellow">Total Keys</span>
               </div>
               <span className="text-2xl font-extrabold text-electric-yellow">
-                {ssData.reduce((sum, ss) => sum + ss.keysAllocated, 0).toLocaleString()}
+                {loading ? "..." : ssStats?.totalKeys?.toLocaleString() || 0}
               </span>
             </div>
 
           </div>
         </CardContent>
       </Card>
-
 
       {/* Controls */}
       <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:shadow-xl transition-all duration-300 mb-6">
@@ -241,7 +234,7 @@ export function ManageSSPage() {
               <div className="relative w-full sm:max-w-sm">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name, email, or region..."
+                  placeholder="Search by name, email, or location..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-full"
@@ -255,8 +248,9 @@ export function ManageSSPage() {
                   size="sm"
                   onClick={() => setStatusFilter("all")}
                   className={statusFilter === "all" ? "bg-gradient-to-r from-electric-purple to-electric-blue" : ""}
+                  disabled={loading}
                 >
-                  All ({ssData.length})
+                  All ({loading ? "..." : ssStats?.total || 0})
                 </Button>
                 <Button
                   variant={statusFilter === "active" ? "default" : "outline"}
@@ -264,15 +258,23 @@ export function ManageSSPage() {
                   onClick={() => setStatusFilter("active")}
                   className={statusFilter === "active" ? "bg-gradient-to-r from-electric-green to-electric-cyan" : ""}
                 >
-                  Active ({activeCount})
+                  Active ({ssStats?.active || 0})
+                </Button>
+                <Button
+                  variant={statusFilter === "inactive" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("inactive")}
+                  className={statusFilter === "inactive" ? "bg-gradient-to-r from-electric-orange to-electric-pink" : ""}
+                >
+                  Inactive ({ssStats?.inactive || 0})
                 </Button>
                 <Button
                   variant={statusFilter === "blocked" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setStatusFilter("blocked")}
-                  className={statusFilter === "blocked" ? "bg-gradient-to-r from-electric-orange to-electric-pink" : ""}
+                  className={statusFilter === "blocked" ? "bg-gradient-to-r from-red-500 to-red-700" : ""}
                 >
-                  Inactive ({blockedCount})
+                  Blocked ({ssStats?.blocked || 0})
                 </Button>
               </div>
             </div>
@@ -282,6 +284,7 @@ export function ManageSSPage() {
               <Button
                 onClick={() => setIsAddDialogOpen(true)}
                 className="w-full sm:w-auto bg-gradient-to-r from-electric-purple to-electric-blue hover:from-electric-purple/80 hover:to-electric-blue/80"
+                disabled={loading}
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add New SS
@@ -291,14 +294,32 @@ export function ManageSSPage() {
         </CardContent>
       </Card>
 
-
       {/* SS Table */}
+      {loading ? (
+        <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="text-muted-foreground text-center">
+              <div className="text-lg font-medium mb-2">Loading State Supervisors...</div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : error ? (
+        <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="text-red-500 text-center">
+              <div className="text-lg font-medium mb-2">Error Loading Data</div>
+              <div className="text-sm">{error}</div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
       <SSTable
         data={filteredSSData}
         onEdit={setEditingSS}
         onDelete={setDeletingSS}
         onToggleStatus={handleToggleStatus}
       />
+      )}
 
       {/* Dialogs */}
       <AddSSDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAdd={handleAddSS} />
@@ -318,6 +339,15 @@ export function ManageSSPage() {
           onOpenChange={(open) => !open && setDeletingSS(null)}
           ss={deletingSS}
           onDelete={handleDeleteSS}
+        />
+      )}
+
+      {newlyAddedSS && (
+        <AddSSSuccessDialog
+          open={!!newlyAddedSS}
+          onOpenChange={() => setNewlyAddedSS(null)}
+          ss={newlyAddedSS.ss}
+          defaultPassword={newlyAddedSS.defaultPassword}
         />
       )}
     </div>

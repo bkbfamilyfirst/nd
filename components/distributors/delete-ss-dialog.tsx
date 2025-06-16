@@ -4,18 +4,43 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertTriangle, Trash2 } from "lucide-react"
-import type { StateSupervisor } from "./manage-ss-page"
+import type { StateSupervisor } from "@/lib/api"
+import { useToast } from "@/components/ui/use-toast"
+import { deleteNdSs } from "@/lib/api"
+import { useState } from "react"
 
 interface DeleteSSDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   ss: StateSupervisor
-  onDelete: (id: string) => void
+  onDelete: (id: string, success: boolean) => void
 }
 
 export function DeleteSSDialog({ open, onOpenChange, ss, onDelete }: DeleteSSDialogProps) {
-  const handleDelete = () => {
-    onDelete(ss.id)
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleDelete = async () => {
+    setIsLoading(true)
+    try {
+      await deleteNdSs(ss.id)
+      onDelete(ss.id, true)
+      toast({
+        title: "State Supervisor Deleted",
+        description: `${ss.name} has been successfully deleted.`,
+      })
+      onOpenChange(false)
+    } catch (error) {
+      console.error("Failed to delete state supervisor:", error)
+      onDelete(ss.id, false)
+      toast({
+        title: "Failed to delete State Supervisor",
+        description: `There was an error deleting ${ss.name}. Please try again.`,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -37,7 +62,7 @@ export function DeleteSSDialog({ open, onOpenChange, ss, onDelete }: DeleteSSDia
         <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
           <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
           <AlertDescription className="text-red-800 dark:text-red-200">
-            <strong>Warning:</strong> You are about to delete <strong>{ss.name}</strong> from {ss.region}.
+            <strong>Warning:</strong> You are about to delete <strong>{ss.name}</strong> from {ss.location}.
           </AlertDescription>
         </Alert>
 
@@ -52,7 +77,7 @@ export function DeleteSSDialog({ open, onOpenChange, ss, onDelete }: DeleteSSDia
             </div>
             <div>
               <span className="text-muted-foreground">Region:</span>
-              <div className="font-medium">{ss.region}</div>
+              <div className="font-medium">{ss.location}</div>
             </div>
             <div>
               <span className="text-muted-foreground">Email:</span>
@@ -60,22 +85,22 @@ export function DeleteSSDialog({ open, onOpenChange, ss, onDelete }: DeleteSSDia
             </div>
             <div>
               <span className="text-muted-foreground">Keys Allocated:</span>
-              <div className="font-medium">{ss.keysAllocated.toLocaleString()}</div>
+              <div className="font-medium">{ss.keysAllocated?.toLocaleString() || "N/A"}</div>
             </div>
           </div>
         </div>
 
         <div className="flex gap-3 pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={isLoading}>
             Cancel
           </Button>
           <Button
             variant="destructive"
             onClick={handleDelete}
             className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+            disabled={isLoading}
           >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Permanently
+            {isLoading ? "Deleting..." : <><Trash2 className="h-4 w-4 mr-2" />Delete Permanently</>}
           </Button>
         </div>
       </DialogContent>

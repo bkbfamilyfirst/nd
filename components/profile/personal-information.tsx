@@ -1,31 +1,131 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { User, Mail, Phone, MapPin, Save, Edit } from "lucide-react"
+import { getNdProfile, updateNdProfile, NdProfile } from "@/lib/api"
+import { useToast } from "@/components/ui/use-toast"
 
 export function PersonalInformation() {
     const [isEditing, setIsEditing] = useState(false)
-    const [formData, setFormData] = useState({
-        firstName: "John",
-        lastName: "Doe",
-        email: "admin@parentguard.com",
-        phone: "+1 (555) 123-4567",
-        address: "123 Admin Street, Tech City, TC 12345",
-        bio: "Experienced system administrator with 5+ years in parental control systems management.",
+    const [formData, setFormData] = useState<Partial<NdProfile>>({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        address: "",
+        bio: "",
     })
+    const [loading, setLoading] = useState(true)
+    const [saving, setSaving] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const { toast } = useToast()
 
-    const handleInputChange = (field: string, value: string) => {
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const data = await getNdProfile()
+                setFormData({
+                    firstName: data.firstName || "",
+                    lastName: data.lastName || "",
+                    email: data.email,
+                    phone: data.phone,
+                    address: data.address || "",
+                    bio: data.bio || "",
+                })
+            } catch (err) {
+                console.error("Failed to fetch ND profile:", err)
+                setError("Failed to load profile data. Please try again.")
+                toast({
+                    title: "Error",
+                    description: "Failed to load profile data. Please try again.",
+                    variant: "destructive",
+                })
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchProfile()
+    }, [toast])
+
+    const handleInputChange = (field: keyof Partial<NdProfile>, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }))
     }
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        setSaving(true)
+        setError(null)
+        try {
+            await updateNdProfile(formData)
         setIsEditing(false)
-        // Here you would typically save to backend
+            toast({
+                title: "Success",
+                description: "Profile updated successfully!",
+            })
+        } catch (err: any) {
+            console.error("Failed to update ND profile:", err)
+            setError(err.response?.data?.message || "Failed to save profile. Please try again.")
+            toast({
+                title: "Error",
+                description: err.response?.data?.message || "Failed to save profile. Please try again.",
+                variant: "destructive",
+            })
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    if (loading) {
+        return (
+            <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 shadow-md">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                        <div className="rounded-full p-2 bg-gradient-to-r from-electric-purple to-electric-blue">
+                            <User className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="bg-gradient-to-r from-electric-purple to-electric-blue bg-clip-text text-transparent">
+                            Personal Information
+                        </span>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    if (error && !loading) {
+        return (
+            <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 shadow-md">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                        <div className="rounded-full p-2 bg-gradient-to-r from-electric-purple to-electric-blue">
+                            <User className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="bg-gradient-to-r from-electric-purple to-electric-blue bg-clip-text text-transparent">
+                            Personal Information
+                        </span>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-red-500">{error}</p>
+                </CardContent>
+            </Card>
+        )
     }
 
     return (
@@ -44,6 +144,7 @@ export function PersonalInformation() {
                     size="sm"
                     onClick={() => setIsEditing(!isEditing)}
                     className="border-electric-purple/30 text-electric-purple hover:bg-electric-purple/10"
+                    disabled={saving}
                 >
                     <Edit className="mr-2 h-4 w-4" />
                     {isEditing ? "Cancel" : "Edit"}
@@ -58,9 +159,9 @@ export function PersonalInformation() {
                         </Label>
                         <Input
                             id="firstName"
-                            value={formData.firstName}
+                            value={formData.firstName || ""}
                             onChange={(e) => handleInputChange("firstName", e.target.value)}
-                            disabled={!isEditing}
+                            disabled={!isEditing || saving}
                             className="border-electric-purple/30 focus:border-electric-purple focus:ring-electric-purple/20"
                         />
                     </div>
@@ -70,9 +171,9 @@ export function PersonalInformation() {
                         </Label>
                         <Input
                             id="lastName"
-                            value={formData.lastName}
+                            value={formData.lastName || ""}
                             onChange={(e) => handleInputChange("lastName", e.target.value)}
-                            disabled={!isEditing}
+                            disabled={!isEditing || saving}
                             className="border-electric-purple/30 focus:border-electric-purple focus:ring-electric-purple/20"
                         />
                     </div>
@@ -88,9 +189,9 @@ export function PersonalInformation() {
                         <Input
                             id="email"
                             type="email"
-                            value={formData.email}
+                            value={formData.email || ""}
                             onChange={(e) => handleInputChange("email", e.target.value)}
-                            disabled={!isEditing}
+                            disabled={true} // Email is typically not editable
                             className="border-electric-blue/30 focus:border-electric-blue focus:ring-electric-blue/20"
                         />
                     </div>
@@ -102,9 +203,9 @@ export function PersonalInformation() {
                         </Label>
                         <Input
                             id="phone"
-                            value={formData.phone}
+                            value={formData.phone || ""}
                             onChange={(e) => handleInputChange("phone", e.target.value)}
-                            disabled={!isEditing}
+                            disabled={!isEditing || saving}
                             className="border-electric-green/30 focus:border-electric-green focus:ring-electric-green/20"
                         />
                     </div>
@@ -116,9 +217,9 @@ export function PersonalInformation() {
                         </Label>
                         <Input
                             id="address"
-                            value={formData.address}
+                            value={formData.address || ""}
                             onChange={(e) => handleInputChange("address", e.target.value)}
-                            disabled={!isEditing}
+                            disabled={!isEditing || saving}
                             className="border-electric-orange/30 focus:border-electric-orange focus:ring-electric-orange/20"
                         />
                     </div>
@@ -129,9 +230,9 @@ export function PersonalInformation() {
                         </Label>
                         <Textarea
                             id="bio"
-                            value={formData.bio}
+                            value={formData.bio || ""}
                             onChange={(e) => handleInputChange("bio", e.target.value)}
-                            disabled={!isEditing}
+                            disabled={!isEditing || saving}
                             rows={3}
                             className="border-electric-pink/30 focus:border-electric-pink focus:ring-electric-pink/20 resize-none"
                         />
@@ -143,10 +244,15 @@ export function PersonalInformation() {
                     <div className="flex justify-end">
                         <Button
                             onClick={handleSave}
+                            disabled={saving}
                             className="bg-gradient-to-r from-electric-purple to-electric-blue hover:opacity-90 text-white"
                         >
+                            {saving ? "Saving..." : (
+                                <>
                             <Save className="mr-2 h-4 w-4" />
                             Save Changes
+                                </>
+                            )}
                         </Button>
                     </div>
                 )}
