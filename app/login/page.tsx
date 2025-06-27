@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { login } from "@/lib/api"
+import { setAccessToken } from "@/lib/auth"
 import { KeyRound, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
@@ -24,7 +25,7 @@ export default function LoginPage() {
     setIsLoading(true)
     try {
       const response = await login({ email, password })
-      localStorage.setItem("accessToken", response.accessToken)
+      setAccessToken(response.accessToken)
       // Redirect based on role or to a default dashboard
       if (response.user.role === "nd") {
         router.push("/")

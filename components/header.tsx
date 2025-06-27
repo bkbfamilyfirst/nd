@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import Logo from '../assets/icons/Logo.svg'
+import { logout } from "@/lib/auth"
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -29,6 +30,10 @@ export default function Header() {
       setSearchQuery("")
     }
   }
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <>
@@ -122,7 +127,7 @@ export default function Header() {
                   {/* <DropdownMenuItem className="text-sm">System Settings</DropdownMenuItem> */}
                   {/* <DropdownMenuItem className="text-sm">Security Logs</DropdownMenuItem> */}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-sm">Sign Out</DropdownMenuItem>
+                  <DropdownMenuItem className="text-sm" onClick={handleLogout}>Sign Out</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

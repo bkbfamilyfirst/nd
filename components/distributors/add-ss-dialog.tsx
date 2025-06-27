@@ -13,7 +13,7 @@ import type { StateSupervisor } from "@/lib/api"
 interface AddSSDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAdd: (ss: { name: string; email: string; phone: string; location: string; status?: "active" | "inactive" | "blocked"; assignedKeys?: number; }) => void
+  onAdd: (ss: { name: string; email: string; phone: string; address: string; status?: "active" | "inactive" | "blocked"; assignedKeys?: number; }) => void
 }
 
 export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
@@ -21,7 +21,7 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
     name: "",
     email: "",
     phone: "",
-    location: "",
+    address: "",
     status: "active" as "active" | "inactive" | "blocked",
     assignedKeys: 0,
   })
@@ -45,8 +45,8 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
       newErrors.phone = "Phone number is required"
     }
 
-    if (!formData.location.trim()) {
-      newErrors.location = "Location is required"
+    if (!formData.address.trim()) {
+      newErrors.address = "Address is required"
     }
 
     if (formData.assignedKeys < 0) {
@@ -71,7 +71,7 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
       name: "",
       email: "",
       phone: "",
-      location: "",
+      address: "",
       status: "active",
       assignedKeys: 0,
     })
@@ -136,10 +136,10 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
               {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="location">Location *</Label>
-              <Select value={formData.location} onValueChange={(value) => handleInputChange("location", value)}>
-                <SelectTrigger className={errors.location ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Select location" />
+              <Label htmlFor="address">Address *</Label>
+              <Select value={formData.address} onValueChange={(value) => handleInputChange("address", value)}>
+                <SelectTrigger className={errors.address ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select address" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="North Region">North Region</SelectItem>
@@ -149,7 +149,7 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
                   <SelectItem value="Central Region">Central Region</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.location && <p className="text-sm text-red-500">{errors.location}</p>}
+              {errors.address && <p className="text-sm text-red-500">{errors.address}</p>}
             </div>
           </div>
 

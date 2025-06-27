@@ -104,7 +104,7 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-electric-orange" />
-                  <span>{ss.location}</span>
+                  <span>{ss.address}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Key className="h-4 w-4 text-electric-purple" />
@@ -194,7 +194,7 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-electric-orange" />
-                        <span>{ss.location}</span>
+                        <span>{ss.address}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">

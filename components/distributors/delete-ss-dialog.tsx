@@ -62,7 +62,7 @@ export function DeleteSSDialog({ open, onOpenChange, ss, onDelete }: DeleteSSDia
         <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
           <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
           <AlertDescription className="text-red-800 dark:text-red-200">
-            <strong>Warning:</strong> You are about to delete <strong>{ss.name}</strong> from {ss.location}.
+            <strong>Warning:</strong> You are about to delete <strong>{ss.name}</strong> from {ss.address}.
           </AlertDescription>
         </Alert>
 
@@ -77,7 +77,7 @@ export function DeleteSSDialog({ open, onOpenChange, ss, onDelete }: DeleteSSDia
             </div>
             <div>
               <span className="text-muted-foreground">Region:</span>
-              <div className="font-medium">{ss.location}</div>
+              <div className="font-medium">{ss.address}</div>
             </div>
             <div>
               <span className="text-muted-foreground">Email:</span>

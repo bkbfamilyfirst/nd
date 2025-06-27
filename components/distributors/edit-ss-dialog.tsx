@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useState, useEffect } from "react"
-import type { StateSupervisor } from "./manage-ss-page"
+import type { StateSupervisor } from "@/lib/api"
 
 interface EditSSDialogProps {
   open: boolean
@@ -22,8 +22,8 @@ export function EditSSDialog({ open, onOpenChange, ss, onEdit }: EditSSDialogPro
     name: "",
     email: "",
     phone: "",
-    location: "",
-    status: "active" as "active" | "blocked",
+    address: "",
+    status: "active" as "active" | "inactive" | "blocked",
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -34,7 +34,7 @@ export function EditSSDialog({ open, onOpenChange, ss, onEdit }: EditSSDialogPro
         name: ss.name,
         email: ss.email,
         phone: ss.phone,
-        location: ss.location,
+        address: ss.address,
         status: ss.status,
       })
     }
@@ -57,8 +57,8 @@ export function EditSSDialog({ open, onOpenChange, ss, onEdit }: EditSSDialogPro
       newErrors.phone = "Phone is required"
     }
 
-    if (!formData.location.trim()) {
-      newErrors.location = "Location is required"
+    if (!formData.address.trim()) {
+      newErrors.address = "Address is required"
     }
 
     setErrors(newErrors)
@@ -138,10 +138,10 @@ export function EditSSDialog({ open, onOpenChange, ss, onEdit }: EditSSDialogPro
               {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-location">Location *</Label>
-              <Select value={formData.location} onValueChange={(value) => handleInputChange("location", value)}>
-                <SelectTrigger className={errors.location ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Select location" />
+              <Label htmlFor="edit-address">Address *</Label>
+              <Select value={formData.address} onValueChange={(value) => handleInputChange("address", value)}>
+                <SelectTrigger className={errors.address ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select address" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="North Region">North Region</SelectItem>
@@ -151,7 +151,7 @@ export function EditSSDialog({ open, onOpenChange, ss, onEdit }: EditSSDialogPro
                   <SelectItem value="Central Region">Central Region</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.location && <p className="text-sm text-red-500">{errors.location}</p>}
+              {errors.address && <p className="text-sm text-red-500">{errors.address}</p>}
             </div>
           </div>
 
@@ -160,13 +160,14 @@ export function EditSSDialog({ open, onOpenChange, ss, onEdit }: EditSSDialogPro
               <Label htmlFor="edit-status">Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value: "active" | "blocked") => handleInputChange("status", value)}
+                onValueChange={(value: "active" | "inactive" | "blocked") => handleInputChange("status", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
                   <SelectItem value="blocked">Blocked</SelectItem>
                 </SelectContent>
               </Select>

@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { CheckCircle } from "lucide-react"
-import type { StateSupervisor } from "./manage-ss-page"
+import type { StateSupervisor } from "@/lib/api"
 import { CardContent, Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 
@@ -41,8 +41,8 @@ export function AddSSSuccessDialog({ open, onOpenChange, ss, defaultPassword }: 
                 <div className="font-medium text-muted-foreground">Phone:</div>
                 <div className="font-semibold">{ss.phone}</div>
 
-                <div className="font-medium text-muted-foreground">Location:</div>
-                <div className="font-semibold">{ss.location}</div>
+                <div className="font-medium text-muted-foreground">Address:</div>
+                <div className="font-semibold">{ss.address}</div>
 
                 <div className="font-medium text-muted-foreground">Initial Keys:</div>
                 <div className="font-semibold">{ss.assignedKeys.toLocaleString()}</div>

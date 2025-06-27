@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { getAccessToken, logout } from './auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.familyfirst.com';
 
@@ -13,7 +14,7 @@ const api = axios.create({
 // Add request interceptor for authentication
 api.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = getAccessToken();
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -32,27 +33,42 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Check if the error is 401 Unauthorized and if it's an expired token
-    if (axios.isAxiosError(error) && error.response?.status === 401 && error.response?.data?.expired && !originalRequest._retry) {
+    // Check if the error is 401 Unauthorized
+    if (axios.isAxiosError(error) && error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      try {
-        // Attempt to refresh the token
-        const response = await api.post('/auth/refresh-token');
-        const newAccessToken = response.data.accessToken;
+      // If this is a refresh token request that failed, just redirect to login
+      if (originalRequest.url?.includes('/auth/refresh-token')) {
+        console.error('Refresh token request failed, redirecting to login');
+        logout();
+        return Promise.reject(error);
+      }
 
-        // Update the stored access token
-        localStorage.setItem('accessToken', newAccessToken);
+      // Try to refresh the token only if we have one and the error indicates it's expired
+      const accessToken = getAccessToken();
+      if (accessToken && error.response?.data?.expired) {
+        try {
+          // Attempt to refresh the token
+          const response = await api.post('/auth/refresh-token');
+          const newAccessToken = response.data.accessToken;
 
-        // Retry the original request with the new access token
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        // If refresh fails, redirect to login page
-        console.error('Failed to refresh token:', refreshError);
-        localStorage.removeItem('accessToken');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
+          // Update the stored access token
+          localStorage.setItem('accessToken', newAccessToken);
+
+          // Retry the original request with the new access token
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return api(originalRequest);
+        } catch (refreshError) {
+          // If refresh fails, redirect to login page
+          console.error('Failed to refresh token:', refreshError);
+          logout();
+          return Promise.reject(refreshError);
+        }
+      } else {
+        // No token or not an expired token error, redirect to login
+        console.error('No valid token or unauthorized access, redirecting to login');
+        logout();
+        return Promise.reject(error);
       }
     }
 
@@ -70,7 +86,7 @@ export interface StateSupervisor {
   assignedKeys: number;
   usedKeys: number;
   createdBy: string;
-  location: string;
+  address: string;
   status: "active" | "inactive" | "blocked";
   createdAt?: string;
   updatedAt?: string;
@@ -282,7 +298,7 @@ export const addNdSs = async (ssData: {
   name: string;
   email: string;
   phone: string;
-  location: string;
+  address: string;
   status?: string;
   assignedKeys?: number;
 }) => {

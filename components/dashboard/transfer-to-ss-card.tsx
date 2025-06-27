@@ -120,7 +120,7 @@ export function TransferToSSCard() {
             <SelectContent>
                 {ssList.map((ss) => (
                   <SelectItem key={ss.id} value={ss.id}>
-                    {ss.name} - {ss.location} ({ss.assignedKeys - ss.usedKeys} available)
+                    {ss.name} - {ss.address} ({ss.assignedKeys - ss.usedKeys} available)
                   </SelectItem>
                 ))}
             </SelectContent>

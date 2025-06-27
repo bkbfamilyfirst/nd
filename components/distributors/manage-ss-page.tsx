@@ -57,7 +57,7 @@ export function ManageSSPage() {
     const matchesSearch =
       ss.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ss.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ss.location.toLowerCase().includes(searchTerm.toLowerCase())
+      ss.address.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus = statusFilter === "all" || (ss.status ?? '').toLowerCase().trim() === statusFilter || (statusFilter === "inactive" && (ss.status ?? '').toLowerCase().trim() === "inactive")
 
@@ -70,7 +70,7 @@ export function ManageSSPage() {
   console.log("Status Filter:", statusFilter)
   console.log("Filtered SS Data:", filteredSSData)
 
-  const handleAddSS = async (newSS: { name: string; email: string; phone: string; location: string; status?: string; assignedKeys?: number; }) => {
+  const handleAddSS = async (newSS: { name: string; email: string; phone: string; address: string; status?: string; assignedKeys?: number; }) => {
     try {
       const response = await addNdSs({ ...newSS })
       toast({
@@ -96,7 +96,7 @@ export function ManageSSPage() {
         name: updatedSS.name,
         email: updatedSS.email,
         phone: updatedSS.phone,
-        location: updatedSS.location,
+        address: updatedSS.address,
         status: updatedSS.status,
       })
       toast({
