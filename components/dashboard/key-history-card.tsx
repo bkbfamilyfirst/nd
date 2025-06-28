@@ -80,8 +80,8 @@ export function KeyHistoryCard() {
     };
   }, [page, tab, period, searchTerm, pageSize]);
 
-  const handleTabChange = (val: "all" | "received" | "sent") => {
-    setTab(val)
+  const handleTabChange = (val: string) => {
+    setTab(val as "all" | "received" | "sent")
     setPage(1)
   }
 
