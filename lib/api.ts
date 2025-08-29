@@ -1,5 +1,15 @@
 import axios, { AxiosError } from 'axios';
-import { getAccessToken, logout } from './auth';
+import { 
+  getAccessToken, 
+  logout, 
+  setAccessToken, 
+  isTokenExpired,
+  canAttemptRefresh,
+  getRefreshState,
+  addToFailedQueue,
+  setRefreshingState,
+  processFailedQueue
+} from './auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.familyfirst.com';
 
@@ -33,42 +43,93 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Check if the error is 401 Unauthorized
+    // Check if the error is 401 Unauthorized and we haven't already tried to refresh
     if (axios.isAxiosError(error) && error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      // If this is a refresh token request that failed, just redirect to login
+      
+      // If this is a refresh token request that failed, logout immediately
       if (originalRequest.url?.includes('/auth/refresh-token')) {
         console.error('Refresh token request failed, redirecting to login');
         logout();
         return Promise.reject(error);
       }
 
-      // Try to refresh the token only if we have one and the error indicates it's expired
+      // Mark this request as retried to prevent infinite loops
+      originalRequest._retry = true;
+
       const accessToken = getAccessToken();
-      if (accessToken && error.response?.data?.expired) {
-        try {
-          // Attempt to refresh the token
-          const response = await api.post('/auth/refresh-token');
-          const newAccessToken = response.data.accessToken;
-
-          // Update the stored access token
-          localStorage.setItem('accessToken', newAccessToken);
-
-          // Retry the original request with the new access token
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return api(originalRequest);
-        } catch (refreshError) {
-          // If refresh fails, redirect to login page
-          console.error('Failed to refresh token:', refreshError);
-          logout();
-          return Promise.reject(refreshError);
-        }
-      } else {
-        // No token or not an expired token error, redirect to login
-        console.error('No valid token or unauthorized access, redirecting to login');
+      
+      // Check if we have a token and if it's actually expired
+      if (!accessToken || !isTokenExpired(accessToken)) {
+        console.error('No token or token not expired, redirecting to login');
         logout();
         return Promise.reject(error);
+      }
+
+      // Check if we can attempt refresh (cooldown period)
+      if (!canAttemptRefresh()) {
+        console.error('Refresh cooldown active, redirecting to login');
+        logout();
+        return Promise.reject(error);
+      }
+
+      const { isRefreshing } = getRefreshState();
+
+      // If we're already refreshing, queue this request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          addToFailedQueue(
+            (token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(api(originalRequest));
+            },
+            (err: any) => {
+              reject(err);
+            }
+          );
+        });
+      }
+
+      // Set refreshing state to prevent multiple simultaneous refresh attempts
+      setRefreshingState(true);
+
+      try {
+        console.log('Attempting to refresh token...');
+        
+        // Attempt to refresh the token
+        const response = await api.post('/auth/refresh-token');
+        const newAccessToken = response.data.accessToken;
+
+        if (!newAccessToken) {
+          throw new Error('No access token received from refresh endpoint');
+        }
+
+        // Update the stored access token using our utility
+        setAccessToken(newAccessToken);
+
+        // Update the original request with new token
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        // Process the failed queue with the new token
+        processFailedQueue(null, newAccessToken);
+
+        console.log('Token refresh successful');
+
+        // Retry the original request
+        return api(originalRequest);
+
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        
+        // Process the failed queue with error
+        processFailedQueue(refreshError, null);
+        
+        // Clear auth state and redirect to login
+        logout();
+        
+        return Promise.reject(refreshError);
+      } finally {
+        // Reset refreshing state
+        setRefreshingState(false);
       }
     }
 

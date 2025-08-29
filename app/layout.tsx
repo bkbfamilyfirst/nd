@@ -7,6 +7,11 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import AuthLayout from "./auth-layout"
 
+// Import auth debug utilities in development
+if (process.env.NODE_ENV === 'development') {
+  import("@/lib/auth-debug");
+}
+
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
