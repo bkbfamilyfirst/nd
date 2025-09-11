@@ -83,7 +83,7 @@ export function TotalReceivedKeysCard() {
         </div>
         <div className="mt-3 flex justify-between text-xs text-muted-foreground">
           <span>Assigned: {summary?.assignedKeys.toLocaleString() || "N/A"}</span>
-          <span>Used: {summary?.usedKeys.toLocaleString() || "N/A"}</span>
+          <span>Used by SS: {summary?.usedKeys.toLocaleString() || "N/A"}</span>
         </div>
       </CardContent>
     </Card>

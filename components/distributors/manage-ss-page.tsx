@@ -72,14 +72,18 @@ export function ManageSSPage() {
 
   const handleAddSS = async (newSS: { name: string; email: string; phone: string; address: string; status?: string; assignedKeys?: number; }) => {
     try {
-      const response = await addNdSs({ ...newSS })
+      const response = await addNdSs({
+        ...newSS,
+        username: "",
+        password: ""
+      })
       toast({
         title: "Success",
-        description: `State Supervisor ${response.ss.name} added successfully. Default password: ${response.defaultPassword}`,
+        description: `State Supervisor ${response.ss.name} added successfully. Default password: ${response.ss.password}`,
       })
-      setNewlyAddedSS({ ss: response.ss, defaultPassword: response.defaultPassword })
+      setNewlyAddedSS({ ss: response.ss, defaultPassword: response.ss.password })
       fetchSsData()
-    setIsAddDialogOpen(false)
+      setIsAddDialogOpen(false)
     } catch (err: any) {
       console.error("Error adding SS:", err)
       toast({
@@ -345,7 +349,7 @@ export function ManageSSPage() {
       {newlyAddedSS && (
         <AddSSSuccessDialog
           open={!!newlyAddedSS}
-          onOpenChange={() => setNewlyAddedSS(null)}
+          onOpenChangeAction={() => setNewlyAddedSS(null)}
           ss={newlyAddedSS.ss}
           defaultPassword={newlyAddedSS.defaultPassword}
         />

@@ -147,7 +147,7 @@ export function ActiveDistributorsCard() {
               ssList.map((ss) => (
               <div
                   key={ss.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow"
+                className="flex items-center justify-between p-3 rounded-lg bg-gray-100 dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
@@ -164,7 +164,7 @@ export function ActiveDistributorsCard() {
                   </Avatar>
                   <div>
                       <div className="font-medium text-sm">{ss.name}</div>
-                      <div className="text-xs text-muted-foreground">{ss.location}</div>
+                      <div className="text-xs text-muted-foreground">{ss.address}</div>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">

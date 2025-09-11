@@ -76,7 +76,7 @@ export function TransferredBalanceKeysCard() {
       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-electric-cyan/30 to-electric-green/30 rounded-full -translate-y-12 translate-x-12"></div>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Transferred / Balance Keys
+          Transferred Keys
         </CardTitle>
         <div className="rounded-full p-3 bg-gradient-to-r from-electric-cyan to-electric-green shadow-lg">
           <ArrowLeftRight className="h-5 w-5 text-white" />

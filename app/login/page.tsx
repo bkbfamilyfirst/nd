@@ -13,7 +13,7 @@ import { setAccessToken } from "@/lib/auth"
 import { KeyRound, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
+  const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -24,7 +24,7 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const response = await login({ email, password })
+      const response = await login({ identifier, password })
       setAccessToken(response.accessToken)
       // Redirect based on role or to a default dashboard
       if (response.user.role === "nd") {
@@ -69,13 +69,13 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-3">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="identifier">Email, Username, or Phone</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="identifier"
+                type="text"
+                placeholder="Enter email, username, or phone"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
                 className="border-electric-purple/30 focus:border-electric-purple focus:ring-electric-purple/20"
               />

@@ -141,6 +141,7 @@ api.interceptors.response.use(
 export interface StateSupervisor {
   id: string;
   name: string;
+  username: string;
   email: string;
   phone: string;
   role: string;
@@ -357,11 +358,13 @@ export const updateNdProfile = async (updates: Partial<NdProfile>) => {
 // POST /nd/ss
 export const addNdSs = async (ssData: {
   name: string;
+  username: string;
   email: string;
   phone: string;
   address: string;
   status?: string;
   assignedKeys?: number;
+  password: string;
 }) => {
   try {
     const response = await api.post('/nd/ss', ssData);
@@ -388,7 +391,7 @@ export const transferKeysToSs = async (transferData: {
 };
 
 // POST /auth/login
-export const login = async (credentials: { email: string; password: string }) => {
+export const login = async (credentials: { identifier: string; password: string }) => {
   try {
     const response = await api.post('/auth/login', credentials);
     return response.data;
