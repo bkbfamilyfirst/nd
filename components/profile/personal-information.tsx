@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { User, Mail, Phone, MapPin, Save, Edit } from "lucide-react"
 import { getNdProfile, updateNdProfile, NdProfile } from "@/lib/api"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 
 export function PersonalInformation() {
     const [isEditing, setIsEditing] = useState(false)
@@ -23,7 +23,7 @@ export function PersonalInformation() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const { toast } = useToast()
+    
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -40,11 +40,7 @@ export function PersonalInformation() {
             } catch (err) {
                 console.error("Failed to fetch ND profile:", err)
                 setError("Failed to load profile data. Please try again.")
-                toast({
-                    title: "Error",
-                    description: "Failed to load profile data. Please try again.",
-                    variant: "destructive",
-                })
+                toast.error("Failed to load profile data. Please try again.")
             } finally {
                 setLoading(false)
             }
@@ -62,18 +58,11 @@ export function PersonalInformation() {
         try {
             await updateNdProfile(formData)
         setIsEditing(false)
-            toast({
-                title: "Success",
-                description: "Profile updated successfully!",
-            })
+            toast.success("Profile updated successfully!")
         } catch (err: any) {
             console.error("Failed to update ND profile:", err)
             setError(err.response?.data?.message || "Failed to save profile. Please try again.")
-            toast({
-                title: "Error",
-                description: err.response?.data?.message || "Failed to save profile. Please try again.",
-                variant: "destructive",
-            })
+            toast.error(err.response?.data?.message || "Failed to save profile. Please try again.")
         } finally {
             setSaving(false)
         }

@@ -10,7 +10,7 @@ import { AddSSDialog } from "./add-ss-dialog"
 import { EditSSDialog } from "./edit-ss-dialog"
 import { DeleteSSDialog } from "./delete-ss-dialog"
 import { getNdSsList, getNdSsStats, addNdSs, updateNdSs, deleteNdSs, StateSupervisor as ApiStateSupervisor, SsStats } from "@/lib/api"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { AddSSSuccessDialog } from "./add-ss-success-dialog"
 
 export function ManageSSPage() {
@@ -24,7 +24,7 @@ export function ManageSSPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [newlyAddedSS, setNewlyAddedSS] = useState<{ ss: ApiStateSupervisor; defaultPassword: string } | null>(null)
-  const { toast } = useToast()
+  
 
   const fetchSsData = useCallback(async () => {
     setLoading(true)
@@ -39,11 +39,7 @@ export function ManageSSPage() {
     } catch (err: any) {
       console.error("Failed to fetch SS data:", err)
       setError(err.response?.data?.message || "Failed to load State Supervisors.")
-      toast({
-        title: "Error",
-        description: err.response?.data?.message || "Failed to load State Supervisors.",
-        variant: "destructive",
-      })
+      toast.error(err.response?.data?.message || "Failed to load State Supervisors.")
     } finally {
       setLoading(false)
     }
@@ -77,20 +73,13 @@ export function ManageSSPage() {
         username: "",
         password: ""
       })
-      toast({
-        title: "Success",
-        description: `State Supervisor ${response.ss.name} added successfully. Default password: ${response.ss.password}`,
-      })
+      toast.success(`State Supervisor ${response.ss.name} added successfully. Default password: ${response.ss.password}`)
       setNewlyAddedSS({ ss: response.ss, defaultPassword: response.ss.password })
       fetchSsData()
       setIsAddDialogOpen(false)
     } catch (err: any) {
       console.error("Error adding SS:", err)
-      toast({
-        title: "Error",
-        description: err.response?.data?.message || "Failed to add State Supervisor.",
-        variant: "destructive",
-      })
+      toast.error(err.response?.data?.message || "Failed to add State Supervisor.")
     }
   }
 
@@ -103,38 +92,24 @@ export function ManageSSPage() {
         address: updatedSS.address,
         status: updatedSS.status,
       })
-      toast({
-        title: "Success",
-        description: `State Supervisor ${updatedSS.name} updated successfully.`,
-      })
+      toast.success(`State Supervisor ${updatedSS.name} updated successfully.`)
       fetchSsData()
     setEditingSS(null)
     } catch (err: any) {
       console.error("Error updating SS:", err)
-      toast({
-        title: "Error",
-        description: err.response?.data?.message || "Failed to update State Supervisor.",
-        variant: "destructive",
-      })
+      toast.error(err.response?.data?.message || "Failed to update State Supervisor.")
     }
   }
 
   const handleDeleteSS = async (id: string) => {
     try {
       await deleteNdSs(id)
-      toast({
-        title: "Success",
-        description: "State Supervisor deleted successfully.",
-      })
+      toast.success("State Supervisor deleted successfully.")
       fetchSsData()
     setDeletingSS(null)
     } catch (err: any) {
       console.error("Error deleting SS:", err)
-      toast({
-        title: "Error",
-        description: err.response?.data?.message || "Failed to delete State Supervisor.",
-        variant: "destructive",
-      })
+      toast.error(err.response?.data?.message || "Failed to delete State Supervisor.")
     }
   }
 
@@ -142,18 +117,11 @@ export function ManageSSPage() {
     const newStatus = currentStatus === "active" ? "blocked" : "active"
     try {
       await updateNdSs(id, { status: newStatus })
-      toast({
-        title: "Success",
-        description: `State Supervisor status updated to ${newStatus}.`,
-      })
+      toast.success(`State Supervisor status updated to ${newStatus}.`)
       fetchSsData()
     } catch (err: any) {
       console.error("Error toggling SS status:", err)
-      toast({
-        title: "Error",
-        description: err.response?.data?.message || "Failed to update status.",
-        variant: "destructive",
-      })
+      toast.error(err.response?.data?.message || "Failed to update status.")
     }
   }
 

@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import {
   Edit,
   Trash2,
+  MoreHorizontal,
   Mail,
   Phone,
   MapPin,
@@ -17,6 +18,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
+import { ChangeSSPasswordDialog } from "./change-ss-password-dialog"
 import type { StateSupervisor } from "@/lib/api"
 
 interface SSTableProps {
@@ -29,6 +37,8 @@ interface SSTableProps {
 
 export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }: SSTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const [selectedSsId, setSelectedSsId] = useState<string | null>(null)
 
   const totalPages = Math.ceil(data.length / perPage)
 
@@ -232,22 +242,36 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => onEdit(ss)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            console.log("SS object before onDelete (Desktop):", ss);
-                            onDelete(ss);
-                          }}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                              <div className="flex gap-2">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent>
+                                    <DropdownMenuItem onClick={() => onEdit(ss)}>
+                                      <Edit className="h-4 w-4 mr-2" /> Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        console.log("SS object before onDelete (Desktop):", ss);
+                                        onDelete(ss);
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" /> Delete
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setSelectedSsId(ss.id)
+                                        setIsChangePasswordOpen(true)
+                                      }}
+                                    >
+                                      <Key className="h-4 w-4 mr-2" /> Change Password
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                     </td>
                   </tr>
                 ))}
@@ -280,6 +304,7 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
           </div>
         </CardContent>
       </Card>
+      <ChangeSSPasswordDialog open={isChangePasswordOpen} onOpenChange={(open) => { setIsChangePasswordOpen(open); if (!open) setSelectedSsId(null); }} ssId={selectedSsId} />
     </div>
   )
 }

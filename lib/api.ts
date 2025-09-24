@@ -390,6 +390,17 @@ export const transferKeysToSs = async (transferData: {
   }
 };
 
+// POST /nd/ss/:id/change-password
+export const changeSsPassword = async (ssId: string, newPassword: string) => {
+  try {
+    const response = await api.post(`/nd/ss/${ssId}/change-password`, { newPassword });
+    return response.data;
+  } catch (error) {
+    console.error('Error changing SS password:', error);
+    throw error;
+  }
+};
+
 // POST /auth/login
 export const login = async (credentials: { identifier: string; password: string }) => {
   try {

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { login } from "@/lib/api"
 import { setAccessToken } from "@/lib/auth"
 import { KeyRound, Eye, EyeOff } from "lucide-react"
@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -33,18 +33,11 @@ export default function LoginPage() {
         // Handle other roles or default to dashboard
         router.push("/dashboard") // Or a more appropriate page
       }
-      toast({
-        title: "Login Successful",
-        description: `Welcome, ${response.user.name}!`,
-      })
+      toast.success(`Welcome, ${response.user.name}!`)
     } catch (error: any) {
       console.error("Login failed:", error)
       const errorMessage = error.response?.data?.message || "Invalid credentials or server error."
-      toast({
-        title: "Login Failed",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }

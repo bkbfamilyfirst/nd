@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowRightLeft, Send } from "lucide-react"
 import { useState, useEffect } from "react"
 import { getNdSsList, transferKeysToSs, StateSupervisor, KeyTransferLog, getNdKeyTransferLogs } from "@/lib/api"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 
 export function TransferToSSCard() {
   const [ssId, setSsId] = useState("")
@@ -18,7 +18,7 @@ export function TransferToSSCard() {
   const [loadingTransfer, setLoadingTransfer] = useState(false)
   const [errorSs, setErrorSs] = useState<string | null>(null)
   const [lastTransfer, setLastTransfer] = useState<KeyTransferLog | null>(null)
-  const { toast } = useToast()
+  
 
   const fetchSsList = async () => {
     setLoadingSs(true)
@@ -55,11 +55,7 @@ export function TransferToSSCard() {
 
   const handleTransferKeys = async () => {
     if (!ssId || !keyCount || Number(keyCount) <= 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a State Supervisor and enter a valid number of keys.",
-        variant: "destructive",
-      })
+      toast.error("Please select a State Supervisor and enter a valid number of keys.")
       return
     }
 
@@ -69,21 +65,14 @@ export function TransferToSSCard() {
         ssId: ssId,
         keysToTransfer: Number(keyCount),
       })
-      toast({
-        title: "Transfer Successful",
-        description: `Successfully transferred ${keyCount} keys to the selected State Supervisor.`, 
-      })
+      toast.success(`Successfully transferred ${keyCount} keys to the selected State Supervisor.`)
       setKeyCount("") // Clear input after successful transfer
       fetchSsList() // Refresh SS list to update available keys
       fetchLastTransfer() // Update last transfer log
     } catch (err: any) {
       console.error("Failed to transfer keys:", err)
       const errorMessage = err.response?.data?.message || "Failed to transfer keys. Please try again."
-      toast({
-        title: "Transfer Failed",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      toast.error(errorMessage)
     } finally {
       setLoadingTransfer(false)
     }

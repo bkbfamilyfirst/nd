@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertTriangle, Trash2 } from "lucide-react"
 import type { StateSupervisor } from "@/lib/api"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { deleteNdSs } from "@/lib/api"
 import { useState } from "react"
 
@@ -17,7 +17,7 @@ interface DeleteSSDialogProps {
 }
 
 export function DeleteSSDialog({ open, onOpenChange, ss, onDelete }: DeleteSSDialogProps) {
-  const { toast } = useToast()
+  
   const [isLoading, setIsLoading] = useState(false)
 
   const handleDelete = async () => {
@@ -25,19 +25,12 @@ export function DeleteSSDialog({ open, onOpenChange, ss, onDelete }: DeleteSSDia
     try {
       await deleteNdSs(ss.id)
       onDelete(ss.id, true)
-      toast({
-        title: "State Supervisor Deleted",
-        description: `${ss.name} has been successfully deleted.`,
-      })
+      toast.success(`${ss.name} has been successfully deleted.`)
       onOpenChange(false)
     } catch (error) {
       console.error("Failed to delete state supervisor:", error)
       onDelete(ss.id, false)
-      toast({
-        title: "Failed to delete State Supervisor",
-        description: `There was an error deleting ${ss.name}. Please try again.`,
-        variant: "destructive",
-      })
+      toast.error(`There was an error deleting ${ss.name}. Please try again.`)
     } finally {
       setIsLoading(false)
     }

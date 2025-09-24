@@ -11,7 +11,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { getNdKeyTransferLogs, exportNdKeyTransferLogs, KeyTransferLog, KeyTransferLogsResponse } from "@/lib/api"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 
 export function KeyTransferLogs() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -24,7 +24,6 @@ export function KeyTransferLogs() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const { toast } = useToast()
 
   const fetchLogs = async (currentPage: number, currentType: "all" | "sent" | "received", currentStatus: "all" | "completed" | "pending" | "failed", currentDate: Date | undefined, currentSearchTerm: string) => {
     setLoading(true)
@@ -54,11 +53,7 @@ export function KeyTransferLogs() {
     } catch (err) {
       console.error("Error fetching key transfer logs:", err)
       setError("Failed to load key transfer logs. Please try again.")
-      toast({
-        title: "Error",
-        description: "Failed to load key transfer logs. Please try again.",
-        variant: "destructive",
-      })
+      toast.error("Failed to load key transfer logs. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -99,17 +94,10 @@ export function KeyTransferLogs() {
         type,
         search: searchTerm,
       })
-      toast({
-        title: "Export Initiated",
-        description: "Your key transfer logs export has started. It will download automatically.",
-      })
+      toast.success("Your key transfer logs export has started. It will download automatically.")
     } catch (err: any) {
       console.error("Failed to export key transfer logs:", err)
-      toast({
-        title: "Export Failed",
-        description: err.response?.data?.message || "Failed to export logs. Please try again.",
-        variant: "destructive",
-      })
+      toast.error(err.response?.data?.message || "Failed to export logs. Please try again.")
     }
   }
 
