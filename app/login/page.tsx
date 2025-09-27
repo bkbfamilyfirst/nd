@@ -24,7 +24,7 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const response = await login({ identifier, password })
+      const response = await login({ identifier, password, role: "nd" })
       setAccessToken(response.accessToken)
       // Redirect based on role or to a default dashboard
       if (response.user.role === "nd") {

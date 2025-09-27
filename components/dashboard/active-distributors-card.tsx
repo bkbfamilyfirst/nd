@@ -179,7 +179,7 @@ export function ActiveDistributorsCard() {
                       {ss.status.charAt(0).toUpperCase() + ss.status.slice(1)}
                   </Badge>
                   <div className="text-xs text-muted-foreground">
-                      {ss.usedKeys}/{ss.assignedKeys} keys
+                      {ss.transferredKeys}/{ss.receivedKeys} keys
                     </div>
                   </div>
                 </div>

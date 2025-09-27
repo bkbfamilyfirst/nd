@@ -78,7 +78,7 @@ export function DeleteSSDialog({ open, onOpenChange, ss, onDelete }: DeleteSSDia
             </div>
             <div>
               <span className="text-muted-foreground">Keys Allocated:</span>
-              <div className="font-medium">{ss.keysAllocated?.toLocaleString() || "N/A"}</div>
+              <div className="font-medium">{typeof ss.keysAllocated === 'number' ? ss.keysAllocated.toLocaleString() : "N/A"}</div>
             </div>
           </div>
         </div>

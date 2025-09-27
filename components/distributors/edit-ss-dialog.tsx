@@ -139,18 +139,13 @@ export function EditSSDialog({ open, onOpenChange, ss, onEdit }: EditSSDialogPro
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-address">Address *</Label>
-              <Select value={formData.address} onValueChange={(value) => handleInputChange("address", value)}>
-                <SelectTrigger className={errors.address ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Select address" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="North Region">North Region</SelectItem>
-                  <SelectItem value="South Region">South Region</SelectItem>
-                  <SelectItem value="East Region">East Region</SelectItem>
-                  <SelectItem value="West Region">West Region</SelectItem>
-                  <SelectItem value="Central Region">Central Region</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="edit-address"
+                value={formData.address}
+                onChange={(e) => handleInputChange("address", e.target.value)}
+                placeholder="Enter address"
+                className={errors.address ? "border-red-500" : ""}
+              />
               {errors.address && <p className="text-sm text-red-500">{errors.address}</p>}
             </div>
           </div>

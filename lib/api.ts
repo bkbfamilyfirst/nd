@@ -145,8 +145,8 @@ export interface StateSupervisor {
   email: string;
   phone: string;
   role: string;
-  assignedKeys: number;
-  usedKeys: number;
+  receivedKeys: number;
+  transferredKeys: number;
   createdBy: string;
   address: string;
   status: "active" | "inactive" | "blocked";
@@ -192,8 +192,8 @@ export interface KeyTransferLogsResponse {
 export interface NdReportsSummary {
   totalReceivedKeys: number;
   totalTransferredKeys: number;
-  assignedKeys: number;
-  usedKeys: number;
+  receivedKeys: number;
+  transferredKeys: number;
   balanceKeys: number;
   transferRate: number;
   totalActivations: number;
@@ -208,8 +208,8 @@ export interface NdProfile {
   email: string;
   phone: string;
   role: string;
-  assignedKeys: number;
-  usedKeys: number;
+  receivedKeys: number;
+  transferredKeys: number;
   address?: string;
   bio?: string;
   status: string;
@@ -253,6 +253,9 @@ export const getNdKeyTransferLogs = async (
   search?: string
 ): Promise<KeyTransferLogsResponse> => {
   try {
+    // Capitalize the first letter of type to match backend expectations
+    const capitalizedType = type ? type.charAt(0).toUpperCase() + type.slice(1) : undefined;
+    
     const response = await api.get('/nd/key-transfer-logs', {
       params: {
         page,
@@ -260,7 +263,7 @@ export const getNdKeyTransferLogs = async (
         startDate,
         endDate,
         status,
-        type,
+        type: capitalizedType, // Send capitalized type to match backend
         search,
       },
     });
@@ -363,7 +366,7 @@ export const addNdSs = async (ssData: {
   phone: string;
   address: string;
   status?: string;
-  assignedKeys?: number;
+  receivedKeys?: number;
   password: string;
 }) => {
   try {
@@ -402,7 +405,7 @@ export const changeSsPassword = async (ssId: string, newPassword: string) => {
 };
 
 // POST /auth/login
-export const login = async (credentials: { identifier: string; password: string }) => {
+export const login = async (credentials: { identifier: string; password: string; role: string }) => {
   try {
     const response = await api.post('/auth/login', credentials);
     return response.data;

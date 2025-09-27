@@ -13,7 +13,7 @@ import type { StateSupervisor } from "@/lib/api"
 interface AddSSDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onAdd: (ss: { name: string; username: string; email: string; phone: string; address: string; status?: "active" | "inactive" | "blocked"; assignedKeys?: number; password: string }) => void
+  onAdd: (ss: { name: string; username: string; email: string; phone: string; address: string; status?: "active" | "inactive" | "blocked"; receivedKeys?: number; password: string }) => void
 }
 
 export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
@@ -24,7 +24,7 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
     phone: "",
     address: "",
     status: "active" as "active" | "inactive" | "blocked",
-    assignedKeys: 0,
+    receivedKeys: 0,
     password: "",
   })
 
@@ -55,8 +55,8 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
     } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters"
     }
-    if (formData.assignedKeys < 0) {
-      newErrors.assignedKeys = "Keys allocated must be 0 or greater"
+    if (formData.receivedKeys < 0) {
+      newErrors.receivedKeys = "Keys allocated must be 0 or greater"
     }
 
     setErrors(newErrors)
@@ -80,7 +80,7 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
       phone: "",
       address: "",
       status: "active",
-      assignedKeys: 0,
+      receivedKeys: 0,
       password: "",
     })
     setErrors({})
@@ -194,18 +194,18 @@ export function AddSSDialog({ open, onOpenChange, onAdd }: AddSSDialogProps) {
                 id="keysAllocated"
                 type="number"
                 min="0"
-                value={formData.assignedKeys}
-                onChange={(e) => handleInputChange("assignedKeys", Number.parseInt(e.target.value) || 0)}
+                value={formData.receivedKeys}
+                onChange={(e) => handleInputChange("receivedKeys", Number.parseInt(e.target.value) || 0)}
                 placeholder="0"
-                className={errors.assignedKeys ? "border-red-500" : ""}
+                className={errors.receivedKeys ? "border-red-500" : ""}
               />
-              {errors.assignedKeys && <p className="text-sm text-red-500">{errors.assignedKeys}</p>}
+              {errors.receivedKeys && <p className="text-sm text-red-500">{errors.receivedKeys}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password *</Label>
               <Input
                 id="password"
-                type="password"
+                type="text"
                 value={formData.password}
                 onChange={(e) => handleInputChange("password", e.target.value)}
                 placeholder="Enter password"

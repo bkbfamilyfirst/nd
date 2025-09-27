@@ -75,15 +75,11 @@ export function TotalReceivedKeysCard() {
       </CardHeader>
       <CardContent>
         <div className="text-3xl font-bold bg-gradient-to-r from-electric-purple to-electric-blue bg-clip-text text-transparent">
-          {summary?.totalReceivedKeys.toLocaleString() || "N/A"}
+          {typeof summary?.totalReceivedKeys === 'number' ? summary.totalReceivedKeys.toLocaleString() : "N/A"}
         </div>
         <div className="flex items-center gap-1 mt-2">
           <TrendingUp className="h-4 w-4 text-electric-green" />
           <p className="text-sm text-electric-green font-medium">{summary?.transferRate}% from total assigned</p>
-        </div>
-        <div className="mt-3 flex justify-between text-xs text-muted-foreground">
-          <span>Assigned: {summary?.assignedKeys.toLocaleString() || "N/A"}</span>
-          <span>Used by SS: {summary?.usedKeys.toLocaleString() || "N/A"}</span>
         </div>
       </CardContent>
     </Card>

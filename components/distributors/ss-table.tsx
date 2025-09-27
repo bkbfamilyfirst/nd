@@ -119,7 +119,7 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                 <div className="flex items-center gap-2">
                   <Key className="h-4 w-4 text-electric-purple" />
                   <span>
-                    {ss.usedKeys?.toLocaleString() || "N/A"} / {ss.assignedKeys?.toLocaleString() || "N/A"} keys
+                    {ss.transferredKeys?.toLocaleString() || "N/A"} / {ss.receivedKeys?.toLocaleString() || "N/A"} keys
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -210,12 +210,12 @@ export function SSTable({ data, onEdit, onDelete, onToggleStatus, perPage = 5 }:
                     <td className="px-6 py-4">
                       <div className="space-y-1">
                         <div className="text-sm font-medium">
-                          {ss.usedKeys?.toLocaleString() || "N/A"} / {ss.assignedKeys?.toLocaleString() || "N/A"}
+                          {ss.transferredKeys?.toLocaleString() || "N/A"} / {ss.receivedKeys?.toLocaleString() || "N/A"}
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
                             className="bg-gradient-to-r from-electric-blue to-electric-purple h-2 rounded-full"
-                            style={{ width: `${((ss.usedKeys || 0) / (ss.assignedKeys || 1)) * 100}%` }}
+                            style={{ width: `${((ss.transferredKeys || 0) / (ss.receivedKeys || 1)) * 100}%` }}
                           ></div>
                         </div>
                       </div>

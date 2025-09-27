@@ -66,12 +66,10 @@ export function ManageSSPage() {
   console.log("Status Filter:", statusFilter)
   console.log("Filtered SS Data:", filteredSSData)
 
-  const handleAddSS = async (newSS: { name: string; email: string; phone: string; address: string; status?: string; assignedKeys?: number; }) => {
+  const handleAddSS = async (newSS: { name: string; username: string; email: string; phone: string; address: string; status?: string; receivedKeys?: number; password: string}) => {
     try {
       const response = await addNdSs({
         ...newSS,
-        username: "",
-        password: ""
       })
       toast.success(`State Supervisor ${response.ss.name} added successfully. Default password: ${response.ss.password}`)
       setNewlyAddedSS({ ss: response.ss, defaultPassword: response.ss.password })

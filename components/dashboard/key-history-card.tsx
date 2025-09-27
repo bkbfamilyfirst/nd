@@ -45,14 +45,15 @@ export function KeyHistoryCard() {
       }
       endDate = format(now, 'yyyy-MM-dd');
 
+      // Pass the lowercase tab value; the API function will capitalize it
       const type = currentTab === 'all' ? undefined : currentTab;
-
+      console.log('Sending API request with type:', type);
       const data = await getNdKeyTransferLogs(
         currentPage,
         pageSize,
         startDate,
         endDate,
-        undefined, // status filter not directly in this card, can be added if needed
+        undefined, // status filter not directly in this card
         type,
         currentSearchTerm
       )
@@ -95,8 +96,13 @@ export function KeyHistoryCard() {
     setPage(1);
   };
 
-  const totalPages = logsResponse ? Math.ceil(logsResponse.total / pageSize) : 1
-  const paginatedData = logsResponse ? logsResponse.logs : []
+  const totalPages = logsResponse ? Math.ceil(logsResponse.total / pageSize) : 1;
+  const paginatedData = logsResponse ? logsResponse.logs : [];
+
+  // Client-side filtering by tab
+  const filteredData = tab === 'all'
+    ? paginatedData
+    : paginatedData.filter(item => item.type.toLowerCase() === tab);
 
   return (
     <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:shadow-xl transition-all duration-300">
@@ -156,7 +162,8 @@ export function KeyHistoryCard() {
             <div className="text-center py-8 text-red-500">
               <p>{error}</p>
             </div>
-          ) : paginatedData.length === 0 ? (
+
+          ) : filteredData.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No key history found for the selected filters.</p>
             </div>
@@ -164,11 +171,11 @@ export function KeyHistoryCard() {
             <>
               {/* Mobile Card Layout */}
               <div className="block md:hidden space-y-3">
-                {paginatedData.map((item) => (
+                {filteredData.map((item) => (
                   <div key={item.transferId} className="p-4 rounded-lg border bg-white dark:bg-gray-800 shadow-sm">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        {item.type === "received" ? (
+                        {item.type.toLowerCase() === "received" ? (
                           <>
                             <ArrowDown className="h-4 w-4 text-electric-green" />
                             <span className="text-sm font-medium text-electric-green">Received</span>
@@ -187,13 +194,13 @@ export function KeyHistoryCard() {
                         <span className="text-sm text-muted-foreground">Quantity:</span>
                         <span className="font-medium">{item.count.toLocaleString()}</span>
                       </div>
-                      {item.type === "sent" && (
+                      {item.type.toLowerCase() === "sent" && (
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-muted-foreground">To:</span>
                           <span className="text-sm truncate max-w-[150px]">{item.to?.name || "N/A"}</span>
                         </div>
                       )}
-                      {item.type === "received" && (
+                      {item.type.toLowerCase() === "received" && (
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-muted-foreground">From:</span>
                           <span className="text-sm truncate max-w-[150px]">{item.from?.name || "N/A"}</span>
@@ -219,12 +226,12 @@ export function KeyHistoryCard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {paginatedData.map((item) => (
+                      {filteredData.map((item) => (
                         <tr key={item.transferId} className="border-t hover:bg-muted/30">
                           <td className="px-4 py-3">{new Date(item.timestamp).toLocaleDateString()}</td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1">
-                              {item.type === "received" ? (
+                              {item.type.toLowerCase() === "received" ? (
                                 <>
                                   <ArrowDown className="h-4 w-4 text-electric-green" />
                                   <span className="text-electric-green">Received</span>

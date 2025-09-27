@@ -104,8 +104,8 @@ export function SSAllocationCard() {
     )
   }
 
-  const totalAllocated = ssList.reduce((sum, ss) => sum + ss.assignedKeys, 0);
-  const totalUsed = ssList.reduce((sum, ss) => sum + ss.usedKeys, 0);
+  const totalAllocated = ssList.reduce((sum, ss) => sum + ss.receivedKeys, 0);
+  const totalUsed = ssList.reduce((sum, ss) => sum + ss.transferredKeys, 0);
 
   return (
     <Card className="border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:shadow-xl transition-all duration-300">
@@ -148,7 +148,7 @@ export function SSAllocationCard() {
               <p className="text-muted-foreground text-center py-4">No state supervisors found.</p>
             ) : (
               ssList.map((ss) => {
-                const usagePercentage = ss.assignedKeys > 0 ? Math.round((ss.usedKeys / ss.assignedKeys) * 100) : 0
+                const usagePercentage = ss.receivedKeys > 0 ? Math.round((ss.transferredKeys / ss.receivedKeys) * 100) : 0
               let progressColor = "bg-electric-green"
 
               if (usagePercentage >= 80) {
@@ -170,8 +170,8 @@ export function SSAllocationCard() {
                   </div>
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Used: {ss.usedKeys.toLocaleString()}</span>
-                        <span>Allocated: {ss.assignedKeys.toLocaleString()}</span>
+                        <span>Used: {ss.transferredKeys.toLocaleString()}</span>
+                        <span>Allocated: {ss.receivedKeys.toLocaleString()}</span>
                     </div>
                     <Progress value={usagePercentage} className={`h-2 ${progressColor}`} />
                   </div>
